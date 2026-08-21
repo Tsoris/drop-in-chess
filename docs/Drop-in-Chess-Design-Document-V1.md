@@ -171,11 +171,13 @@ Future database responsibilities may include:
 -   Store users.
 -   Store ratings.
 
-### 6.4 Chess Rules
+### 6.4 Backend Chess Rules
 
-Library: - TBD
+Library: chesslib
 
-Responsibilities:
+https://github.com/bhlangonijr/chesslib/tree/master
+
+Backend Responsibilities:
 
 -   Validate legal moves.
 -   Detect check.
@@ -183,7 +185,37 @@ Responsibilities:
 -   Detect draws.
 -   Generate updated positions.
 
-### 6.5 Chess Analysis --- Future
+### 6.5 Frontend Chess Rules
+
+Library: chess.js
+
+https://www.npmjs.com/package/chess.js
+
+Frontend Responsibilities:
+
+- Load FEN positions received from the backend.
+- Validate moves locally for responsive gameplay.
+- Generate legal moves for UI features such as move highlighting.
+- Apply moves locally for immediate board updates.
+- Maintain a local representation of the current position.
+- Generate the local FEN when needed.
+
+### 6.6 Chessboard UI
+
+Library: react-chessboard
+
+https://www.npmjs.com/package/react-chessboard
+
+Frontend Responsibilities:
+
+- Render chess positions.
+- Display pieces and board orientation.
+- Handle piece drag-and-drop/click interactions.
+- Display move highlighting and other board indicators.
+- Pass attempted moves to the frontend game logic.
+- Update the displayed position when game state changes.
+
+### 6.7 Chess Analysis --- Future
 
 Chess-engine analysis is not required for V1. V1 may use materially or
 positionally imbalanced positions and will not automatically evaluate
