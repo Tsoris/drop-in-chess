@@ -550,8 +550,8 @@ Potential testing layers:
 
 ### Milestone 2 --- Local Chess Prototype
 
--   [ ] Load a starting position from FEN
--   [ ] Display the position
+-   [x] Load a starting position from FEN
+-   [x] Display the position
 -   [ ] Allow legal moves
 -   [ ] Update game state
 -   [ ] Detect game completion

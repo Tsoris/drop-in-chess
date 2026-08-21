@@ -1,8 +1,14 @@
 import { Chessboard } from 'react-chessboard';
 
-function GameBoard() {
+type GameBoardProps = {
+    startPosition: string;
+};
+
+function GameBoard({startPosition}: GameBoardProps) {
+
+
   const chessboardOptions = {
-    // your config options here
+    position: startPosition
   };
 
   return <Chessboard options={chessboardOptions} />;

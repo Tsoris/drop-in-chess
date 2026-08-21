@@ -11,7 +11,7 @@ function BackendHealthStatus() {
             })
             .catch(error => {
                 console.error("Backend request failed:", error);
-                setStatus("NOT CONNECTED")
+                setStatus("NOT CONNECTED");
             });
     }, []);
 
