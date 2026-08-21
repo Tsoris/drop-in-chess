@@ -514,7 +514,7 @@ Potential testing layers:
 -   [x] Initialize Spring Boot backend
 -   [x] Initialize React/TypeScript frontend with Vite
 -   [x] Create backend health endpoint
--   [ ] Connect frontend to backend
+-   [x] Connect frontend to backend
 
 ### Milestone 2 --- Local Chess Prototype
 
