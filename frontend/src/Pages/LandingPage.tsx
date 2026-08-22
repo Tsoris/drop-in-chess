@@ -20,8 +20,16 @@ export const LandingPage = () => {
     async function handlePlayNow() {
         const existingGameId = sessionStorage.getItem("gameId");
         if (existingGameId) {
-            navigate(`/game/${existingGameId}`);
-            return;
+            const response = await fetch(
+                `http://localhost:8080/games/${existingGameId}`
+            );
+
+            if (response.ok) {
+                navigate(`/game/${existingGameId}`);
+                return;
+            }
+
+            sessionStorage.removeItem("gameId");
         }
 
         try {
