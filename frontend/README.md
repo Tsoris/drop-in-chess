@@ -14,3 +14,11 @@ From the `frontend` directory:
 ```bash
 npm install
 npm run dev
+```
+
+## To Test
+From the `frontend` directory:
+
+```bash
+npm test
+```
