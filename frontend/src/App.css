@@ -24,15 +24,14 @@
     flex: 1;
 }
 
-/*---------------------Play Page---------------------*/
-.play-page {
+.web-page {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
-    padding: 2rem;
+    gap: 1rem;
 }
 
+/*---------------------Play Page---------------------*/
 .session-controls {
     display: flex;
     flex-direction: column;
@@ -50,13 +49,6 @@
 }
 
 /*---------------------Landing Page---------------------*/
-.landing-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
 .restore-section {
   display: flex;
   flex-direction: column;

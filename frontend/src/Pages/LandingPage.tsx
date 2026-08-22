@@ -89,7 +89,7 @@ export const LandingPage = () => {
     }
 
     return (
-        <main className="landing-page">
+        <main className="web-page">
             <h2>Welcome to Drop in Chess</h2>
 
             <p>Let's jump into an interesting position</p>
@@ -101,7 +101,7 @@ export const LandingPage = () => {
 
                 <input
                     type="text"
-                    placeholder="Enter Session ID"
+                    placeholder="Enter session ID"
                     value={restoreGameId}
                     onChange={(event) => setRestoreGameId(event.target.value)}
                 />

@@ -52,8 +52,10 @@ export const PlayPage = () => {
   console.log(startPosition);
 
   return (
-    <main className="play-page">
-      <p>Good luck and have fun</p>
+    <main className="web-page">
+
+      <h2></h2>
+      <p>Good luck and have fun!</p>
 
       <div className="session-controls">
         <button onClick={copyGameId}>
