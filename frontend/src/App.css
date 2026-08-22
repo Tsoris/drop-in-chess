@@ -33,6 +33,22 @@
     padding: 2rem;
 }
 
+.session-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.session-message {
+    height: 1.25rem;
+}
+
+.session-info {
+    font-size: 0.8rem;
+    color: #22c55e;
+}
+
 /*---------------------Landing Page---------------------*/
 .landing-page {
   display: flex;
@@ -51,4 +67,14 @@
 .restore-section input {
   width: 300px;
   padding: 0.5rem;
+}
+
+.restore-error {
+    color: #d98c8c;
+    background-color: rgba(120, 60, 60, 0.12);
+    border: 1px solid rgba(217, 140, 140, 0.3);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
 }

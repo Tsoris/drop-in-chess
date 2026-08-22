@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -56,7 +57,7 @@ export const LandingPage = () => {
     async function restoreGame() {
         const gameId = restoreGameId.trim();
         if (!gameId) {
-            setRestoreError("Enter a Session ID.");
+            showRestoreError("Enter a Session ID.");
             return;
         }
 
@@ -65,7 +66,7 @@ export const LandingPage = () => {
                 `http://localhost:8080/games/${gameId}`
             );
             if (!response.ok) {
-                setRestoreError("Invalid or expired Session ID.");
+                showRestoreError("Invalid or expired Session ID.");
                 return;
             }
 
@@ -75,8 +76,16 @@ export const LandingPage = () => {
             navigate(`/game/${gameId}`);
         } catch (error) {
             console.error("Unable to restore game:", error);
-            setRestoreError("Unable to connect to the server.");
+            showRestoreError("Unable to connect to the server.");
         }
+    }
+
+    function showRestoreError(message: string) {
+        setRestoreError(message);
+
+        setTimeout(() => {
+            setRestoreError("");
+        }, 3000);
     }
 
     return (
@@ -99,11 +108,26 @@ export const LandingPage = () => {
 
                 <button onClick={restoreGame}>Restore Game</button>
 
-                {restoreError && (
-                    <p className="restore-error">
-                        {restoreError}
-                    </p>
-                )}
+                <AnimatePresence>
+                    {restoreError && (
+                        <motion.p
+                            className="restore-error"
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{
+                                opacity: 1,
+                                y: 0,
+                                transition: { duration: 0.5 }
+                            }}
+                            exit={{
+                                opacity: 0,
+                                y: -5,
+                                transition: { duration: 0.8 }
+                            }}
+                        >
+                            {restoreError}
+                        </motion.p>
+                    )}
+                </AnimatePresence>
 
             </div>
         </main>

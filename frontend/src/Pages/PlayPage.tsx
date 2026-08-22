@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import Gameboard from "../components/Gameboard";
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
 /**
  * Renders an active chess game session.
@@ -14,12 +15,21 @@ export const PlayPage = () => {
   const { gameId } = useParams();
   console.log(gameId);
 
+  const [copyMessage, setCopyMessage] = useState("");
+
   function copyGameId() {
     if (gameId) {
       navigator.clipboard.writeText(gameId);
+
+      setCopyMessage(
+        "Copied! Sessions expire after 3 days of inactivity."
+      );
+
+      setTimeout(() => {
+        setCopyMessage("");
+      }, 4000);
     }
   }
-
   // Load the authoritative game state whenever the game ID in the URL changes.
   useEffect(() => {
     fetch(`http://localhost:8080/games/${gameId}`)
@@ -44,9 +54,36 @@ export const PlayPage = () => {
   return (
     <main className="play-page">
       <p>Good luck and have fun</p>
-      <button onClick={copyGameId}>
-        Copy Session ID
-      </button>
+
+      <div className="session-controls">
+        <button onClick={copyGameId}>
+          Copy Session ID
+        </button>
+
+        <div className="session-message">
+          <AnimatePresence>
+            {copyMessage && (
+              <motion.span
+                className="session-info"
+                initial={{ opacity: 0, y: -5 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  transition: { duration: 0.2 }
+                }}
+                exit={{
+                  opacity: 0,
+                  y: -5,
+                  transition: { duration: 0.6 }
+                }}
+              >
+                {copyMessage}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
       <Gameboard startPosition={startPosition} />
       <button
         onClick={() => sessionStorage.removeItem("gameId")}>Clear Game Session
