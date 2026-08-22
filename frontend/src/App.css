@@ -14,14 +14,6 @@
     padding: 2rem;
 }
 
-.play-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-    padding: 2rem;
-}
-
 .app {
     min-height: 100vh;
     display: flex;
@@ -30,4 +22,33 @@
 
 .main-content {
     flex: 1;
+}
+
+/*---------------------Play Page---------------------*/
+.play-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+/*---------------------Landing Page---------------------*/
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.restore-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.restore-section input {
+  width: 300px;
+  padding: 0.5rem;
 }

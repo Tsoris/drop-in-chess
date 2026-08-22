@@ -13,7 +13,7 @@ function App() {
                 <main className='main-content'>
                     <Routes>
                         <Route path="/" element={<LandingPage/>}/>
-                        <Route path="/play" element={<PlayPage/>}/>
+                        <Route path="/game/:gameId" element={<PlayPage/>}/>
                     </Routes>
                 </main>
             </div>
