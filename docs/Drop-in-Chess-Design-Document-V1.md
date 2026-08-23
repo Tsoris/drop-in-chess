@@ -4,7 +4,7 @@
 
 ### 1.1 Vision
 
-What is Drop in Chess is and what experience is it trying to create?
+What Drop in Chess is and what experience is it trying to create?
 
 Drop in Chess is a chess experience that places players directly into
 curated middlegame and endgame positions rather than starting from the
