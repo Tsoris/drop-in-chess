@@ -1,7 +1,9 @@
 package com.dropinchess.controller;
 
 import com.dropinchess.DataTransferObject.GameResponse;
+import com.dropinchess.DataTransferObject.MoveRequest;
 import com.dropinchess.model.Game;
+import com.dropinchess.DataTransferObject.MoveResponse;
 import com.dropinchess.service.GameService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -99,5 +101,29 @@ public class GameController {
                 .toList();
 
         return ResponseEntity.ok(games);
+    }
+
+    /**
+     * Processes a move attempt for an active game.
+     *
+     * <p>The submitted move is passed to the game service for validation
+     * and execution against the backend's authoritative game state.</p>
+     *
+     * @param gameId the unique ID of the game
+     * @param request the requested move and resulting frontend FEN
+     * @return a response describing the result of the move and the
+     *         authoritative backend FEN
+     */
+    @PostMapping("games/{gameId}/move")
+    public ResponseEntity<MoveResponse> makeMove(
+            @PathVariable UUID gameId,
+            @RequestBody MoveRequest request) {
+        MoveResponse response = gameService.makeMove(
+                gameId,
+                request.from(),
+                request.to(),
+                request.fen()
+        );
+        return ResponseEntity.ok(response);
     }
 }
