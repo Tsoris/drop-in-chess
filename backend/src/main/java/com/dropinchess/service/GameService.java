@@ -4,8 +4,7 @@ import com.dropinchess.model.Game;
 import com.github.bhlangonijr.chesslib.Board;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -36,4 +35,11 @@ public class GameService {
         return activeGames.get(gameId);
     }
 
+    /**
+     * This function is intended for development and administrative
+     * purposes and provides a view of the games currently stored in memory.
+     */
+    public Collection<Game> getAllGames() {
+        return this.activeGames.values();
+    }
 }

@@ -7,10 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @RestController
@@ -75,11 +72,32 @@ public class GameController {
             return ResponseEntity.notFound().build();
         }
 
-        GameResponse response = new GameResponse(
+        GameResponse gameResponse = new GameResponse(
                 game.getId(),
                 game.getBoard().getFen()
         );
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(gameResponse);
+    }
+
+    /**
+     * Retrieves all currently active games.
+     *
+     * This endpoint is intended for development and administrative
+     * purposes and provides a view of the games currently stored in memory.
+     *
+     * @return a response containing all active games and their current positions
+     */
+    @GetMapping("admin/games")
+    public ResponseEntity<List<GameResponse>> getAllGames() {
+        List<GameResponse> games = gameService.getAllGames()
+                .stream()
+                .map(game -> new GameResponse(
+                        game.getId(),
+                        game.getBoard().getFen()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(games);
     }
 }
