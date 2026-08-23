@@ -1,19 +1,20 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Gameboard from "../components/Gameboard";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
-/**
+/*
  * Renders an active chess game session.
  *
  * Retrieves the game ID from the URL and loads the game's current FEN
  * from the backend. Also provides controls for copying the session ID
- * and clearing the locally stored session.
+ * and starting a new game.
  */
 export const PlayPage = () => {
+  const navigate = useNavigate();
+
   const [startPosition, setStartPosition] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   const { gameId } = useParams();
-  console.log(gameId);
 
   const [copyMessage, setCopyMessage] = useState("");
 
@@ -30,6 +31,28 @@ export const PlayPage = () => {
       }, 4000);
     }
   }
+
+  async function handleNewGame() {
+    try {
+            const response = await fetch("http://localhost:8080/games", {
+                method: "POST"
+            });
+
+            if (!response.ok) {
+                console.error("Failed to create game:", response.status);
+                return;
+            }
+
+            const data = await response.json();
+
+            sessionStorage.setItem("gameId", data.gameId);
+            navigate(`/game/${data.gameId}`);
+
+        } catch (error) {
+            console.error("Unable to connect to server:", error);
+        }
+  }
+
   // Load the authoritative game state whenever the game ID in the URL changes.
   useEffect(() => {
     fetch(`http://localhost:8080/games/${gameId}`)
@@ -48,8 +71,6 @@ export const PlayPage = () => {
         console.error("Unable to fetch game:", error);
       });
   }, [gameId]);
-
-  console.log(startPosition);
 
   return (
     <main className="web-page">
@@ -88,9 +109,8 @@ export const PlayPage = () => {
 
       <Gameboard startPosition={startPosition} />
       <button
-        onClick={() => sessionStorage.removeItem("gameId")}>Clear Game Session
+        onClick={handleNewGame}>New Game
       </button>
-
 
     </main>
   )
