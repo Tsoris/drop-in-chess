@@ -13,11 +13,13 @@ import java.util.UUID;
  */
 public class Game {
     private final UUID id;
+    private final String startingFen;
     private final Board board;
     private Instant lastActivity;
 
-    public Game(UUID id, Board board) {
+    public Game(UUID id, String startingFen, Board board) {
         this.id = id;
+        this.startingFen = startingFen;
         this.board = board;
         this.lastActivity = Instant.now();
     }
@@ -28,6 +30,10 @@ public class Game {
 
     public UUID getId() {
         return id;
+    }
+
+    public String getStartingFen(){
+        return startingFen;
     }
 
     public Board getBoard() {

@@ -13,7 +13,7 @@ import { AnimatePresence, motion } from "motion/react";
 export const PlayPage = () => {
   const navigate = useNavigate();
 
-  const [startPosition, setStartPosition] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+  const [chessPosition, setChessPosition] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   const { gameId } = useParams();
 
   const [copyMessage, setCopyMessage] = useState("");
@@ -34,23 +34,23 @@ export const PlayPage = () => {
 
   async function handleNewGame() {
     try {
-            const response = await fetch("http://localhost:8080/games", {
-                method: "POST"
-            });
+      const response = await fetch("http://localhost:8080/games", {
+        method: "POST"
+      });
 
-            if (!response.ok) {
-                console.error("Failed to create game:", response.status);
-                return;
-            }
+      if (!response.ok) {
+        console.error("Failed to create game:", response.status);
+        return;
+      }
 
-            const data = await response.json();
+      const data = await response.json();
 
-            sessionStorage.setItem("gameId", data.gameId);
-            navigate(`/game/${data.gameId}`);
+      sessionStorage.setItem("gameId", data.gameId);
+      navigate(`/game/${data.gameId}`);
 
-        } catch (error) {
-            console.error("Unable to connect to server:", error);
-        }
+    } catch (error) {
+      console.error("Unable to connect to server:", error);
+    }
   }
 
   // Load the authoritative game state whenever the game ID in the URL changes.
@@ -65,7 +65,7 @@ export const PlayPage = () => {
         return response.json();
       })
       .then(data => {
-        setStartPosition(data.fen);
+        setChessPosition(data.fen);
       })
       .catch(error => {
         console.error("Unable to fetch game:", error);
@@ -107,7 +107,11 @@ export const PlayPage = () => {
         </div>
       </div>
 
-      <Gameboard startPosition={startPosition} />
+      <Gameboard
+        gameId={gameId}
+        chessPosition={chessPosition}
+      />
+
       <button
         onClick={handleNewGame}>New Game
       </button>

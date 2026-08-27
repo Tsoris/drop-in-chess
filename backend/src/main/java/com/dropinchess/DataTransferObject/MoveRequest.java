@@ -7,10 +7,10 @@ import com.github.bhlangonijr.chesslib.Square;
  *
  * @param from the square the piece is moving from
  * @param to the square the piece is moving to
- * @param fen the resulting FEN calculated by the frontend after the move
+ * @param checkFen the resulting FEN calculated by the frontend after the move
  */
 public record MoveRequest(
         Square from,
         Square to,
-        String fen
+        String checkFen
 ) {}

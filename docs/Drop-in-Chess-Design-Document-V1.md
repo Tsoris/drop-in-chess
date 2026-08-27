@@ -552,8 +552,8 @@ Potential testing layers:
 
 -   [x] Load a starting position from FEN
 -   [x] Display the position
--   [ ] Allow legal moves
--   [ ] Update game state
+-   [x] Allow legal moves
+-   [x] Update game state
 -   [ ] Detect game completion
 
 ### Milestone 3 --- Position System
