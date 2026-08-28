@@ -10,6 +10,7 @@ type GameBoardProps = {
 type MoveRequest = {
   from: string;
   to: string;
+  promotion?: 'Q' | 'R' |'S'| 'N',
   checkFen: string;
 };
 
@@ -163,8 +164,6 @@ function GameBoard({ gameId, chessPosition }: GameBoardProps) {
     } catch (error) {
       console.error("Failed to connect to server: ", error);
     }
-
-    console.info(currChessPosition)
   }
 
   const chessboardOptions = {

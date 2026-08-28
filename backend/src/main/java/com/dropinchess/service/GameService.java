@@ -1,5 +1,7 @@
 package com.dropinchess.service;
 
+import com.github.bhlangonijr.chesslib.Piece;
+import com.github.bhlangonijr.chesslib.Side;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,12 +76,37 @@ public class GameService {
             UUID gameId,
             Square from,
             Square to,
+            String promotion,
             String checkFen) {
 
         Game game = getGame(gameId);
         Board board = game.getBoard();
 
-        Move attempt = new Move(from, to);
+        Move attempt;
+
+        if (promotion != null) {
+            Piece movingPiece = board.getPiece(from);
+
+            Piece promotionPiece = switch (promotion.toUpperCase()) {
+                case "Q" -> movingPiece.getPieceSide() == Side.WHITE
+                        ? Piece.WHITE_QUEEN
+                        : Piece.BLACK_QUEEN;
+                case "R" -> movingPiece.getPieceSide() == Side.WHITE
+                        ? Piece.WHITE_ROOK
+                        : Piece.BLACK_ROOK;
+                case "B" -> movingPiece.getPieceSide() == Side.WHITE
+                        ? Piece.WHITE_BISHOP
+                        : Piece.BLACK_BISHOP;
+                case "N" -> movingPiece.getPieceSide() == Side.WHITE
+                        ? Piece.WHITE_KNIGHT
+                        : Piece.BLACK_KNIGHT;
+                default -> throw new IllegalArgumentException("Invalid promotion piece");
+            };
+
+            attempt = new Move(from, to, promotionPiece);
+        } else {
+            attempt = new Move(from, to);
+        }
 
         if (!board.isMoveLegal(attempt, true)) {
             logger.warn(

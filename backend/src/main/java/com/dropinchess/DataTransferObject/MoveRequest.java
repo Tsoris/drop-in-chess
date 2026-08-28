@@ -12,5 +12,6 @@ import com.github.bhlangonijr.chesslib.Square;
 public record MoveRequest(
         Square from,
         Square to,
+        String promotion,
         String checkFen
 ) {}

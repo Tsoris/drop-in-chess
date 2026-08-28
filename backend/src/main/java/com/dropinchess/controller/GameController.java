@@ -122,6 +122,7 @@ public class GameController {
                 gameId,
                 request.from(),
                 request.to(),
+                request.promotion(),
                 request.checkFen()
         );
         return ResponseEntity.ok(response);
