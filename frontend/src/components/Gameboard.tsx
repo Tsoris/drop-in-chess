@@ -10,7 +10,7 @@ type GameBoardProps = {
 type MoveRequest = {
   from: string;
   to: string;
-  promotion?: 'Q' | 'R' |'S'| 'N',
+  promotion?: 'q' | 'r' |'s'| 'n',
   checkFen: string;
 };
 
@@ -132,6 +132,10 @@ function GameBoard({ gameId, chessPosition }: GameBoardProps) {
       from: fromSquare.toUpperCase(),
       to: destinationSquare.toUpperCase(),
       checkFen: gameBoardFen
+    };
+
+    if (foundMove.promotion) {
+      moveRequest.promotion = 'q';
     };
 
     setCurrChessPosition(gameBoardFen);
