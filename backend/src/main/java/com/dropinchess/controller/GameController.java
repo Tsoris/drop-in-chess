@@ -47,11 +47,7 @@ public class GameController {
         String randomFen = SAMPLE_FENS.get(randomIndex);
 
         Game game = gameService.createGame(randomFen);
-
-        GameResponse response = new GameResponse(
-                game.getId(),
-                game.getBoard().getFen()
-        );
+        GameResponse response = toGameResponse(game);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -74,10 +70,7 @@ public class GameController {
             return ResponseEntity.notFound().build();
         }
 
-        GameResponse gameResponse = new GameResponse(
-                game.getId(),
-                game.getBoard().getFen()
-        );
+        GameResponse gameResponse = toGameResponse(game);
 
         return ResponseEntity.ok(gameResponse);
     }
@@ -94,10 +87,7 @@ public class GameController {
     public ResponseEntity<List<GameResponse>> getAllGames() {
         List<GameResponse> games = gameService.getAllGames()
                 .stream()
-                .map(game -> new GameResponse(
-                        game.getId(),
-                        game.getBoard().getFen()
-                ))
+                .map(this::toGameResponse)
                 .toList();
 
         return ResponseEntity.ok(games);
@@ -126,5 +116,40 @@ public class GameController {
                 request.checkFen()
         );
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Claims a draw when the current position has occurred three times or the
+     * half-move clock has reached 100. Claims based on a proposed future move
+     * are not supported by this endpoint.
+     */
+    @PostMapping("games/{gameId}/draw-claim")
+    public ResponseEntity<GameResponse> claimDraw(
+            @PathVariable UUID gameId) {
+        Game game = gameService.getGame(gameId);
+
+        if (game == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        boolean claimed = gameService.claimDraw(gameId);
+        GameResponse response = toGameResponse(game);
+
+        if (!claimed) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    private GameResponse toGameResponse(Game game) {
+        return new GameResponse(
+                game.getId(),
+                game.getGameStatus(),
+                game.getGameResult(),
+                game.getGameEndReason(),
+                game.getAvailableDrawClaims(),
+                game.getBoard().getFen()
+        );
     }
 }

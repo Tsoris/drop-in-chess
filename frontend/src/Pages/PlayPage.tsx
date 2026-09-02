@@ -2,7 +2,44 @@ import { useNavigate, useParams } from "react-router-dom";
 import Gameboard from "../components/Gameboard";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import type { GameResponse, GameState } from "../types/GameStatus";
 
+const INITIAL_GAME_STATE: GameState = {
+  status: "IN_PROGRESS",
+  result: null,
+  endReason: null,
+  availableDrawClaims: []
+};
+
+function gameResultMessage(gameState: GameState) {
+  if (gameState.status !== "COMPLETED") {
+    return null;
+  }
+
+  if (gameState.result === "WHITE_WINS") {
+    return gameState.endReason === "RESIGNATION"
+      ? "White wins by resignation."
+      : "White wins by checkmate.";
+  }
+
+  if (gameState.result === "BLACK_WINS") {
+    return gameState.endReason === "RESIGNATION"
+      ? "Black wins by resignation."
+      : "Black wins by checkmate.";
+  }
+
+  const drawMessages = {
+    STALEMATE: "Draw by stalemate.",
+    INSUFFICIENT_MATERIAL: "Draw by insufficient material.",
+    REPETITION: "Draw by repetition.",
+    MOVE_RULE: "Draw by move rule.",
+    AGREEMENT: "Draw by agreement."
+  } as const;
+
+  return gameState.endReason && gameState.endReason in drawMessages
+    ? drawMessages[gameState.endReason as keyof typeof drawMessages]
+    : "Game completed.";
+}
 /*
  * Renders an active chess game session.
  *
@@ -15,6 +52,9 @@ export const PlayPage = () => {
 
   const [chessPosition, setChessPosition] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   const { gameId } = useParams();
+  const [gameState, setGameState] = useState<GameState>(INITIAL_GAME_STATE);
+  const [claimMessage, setClaimMessage] = useState("");
+  const [isClaimingDraw, setIsClaimingDraw] = useState(false);
 
   const [copyMessage, setCopyMessage] = useState("");
 
@@ -53,6 +93,44 @@ export const PlayPage = () => {
     }
   }
 
+  async function handleDrawClaim() {
+    if (!gameId || isClaimingDraw) {
+      return;
+    }
+
+    setIsClaimingDraw(true);
+    setClaimMessage("");
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/games/${gameId}/draw-claim`,
+        { method: "POST" }
+      );
+      const data: GameResponse = await response.json();
+
+      setChessPosition(data.fen);
+      setGameState({
+        status: data.status,
+        result: data.result,
+        endReason: data.endReason,
+        availableDrawClaims: data.availableDrawClaims ?? []
+      });
+
+      if (!response.ok) {
+        setClaimMessage(
+          response.status === 409
+            ? "A draw can no longer be claimed in this position."
+            : "Unable to claim a draw."
+        );
+      }
+    } catch (error) {
+      console.error("Unable to claim draw:", error);
+      setClaimMessage("Unable to connect to the server.");
+    } finally {
+      setIsClaimingDraw(false);
+    }
+  }
+
   // Load the authoritative game state whenever the game ID in the URL changes.
   useEffect(() => {
     fetch(`http://localhost:8080/games/${gameId}`)
@@ -62,10 +140,17 @@ export const PlayPage = () => {
             `Failed to load game: ${response.status}`
           );
         }
-        return response.json();
+        return response.json() as Promise<GameResponse>;
       })
       .then(data => {
         setChessPosition(data.fen);
+        setGameState({
+          status: data.status,
+          result: data.result,
+          endReason: data.endReason,
+          availableDrawClaims: data.availableDrawClaims ?? []
+        });
+        setClaimMessage("");
       })
       .catch(error => {
         console.error("Unable to fetch game:", error);
@@ -108,9 +193,35 @@ export const PlayPage = () => {
       </div>
 
       <Gameboard
+        key={`${gameId}:${chessPosition}`}
         gameId={gameId}
         chessPosition={chessPosition}
+        gameState={gameState}
+        onGameStateChange={setGameState}
       />
+
+      {gameState.status === "IN_PROGRESS" &&
+        gameState.availableDrawClaims.length > 0 && (
+        <div className="draw-claim">
+          <p>
+            {gameState.availableDrawClaims.includes("REPETITION")
+              ? "A draw by repetition is available."
+              : "A draw under the 50-move rule is available."}
+          </p>
+          <button onClick={handleDrawClaim} disabled={isClaimingDraw}>
+            {isClaimingDraw ? "Claiming..." : "Claim Draw"}
+          </button>
+        </div>
+      )}
+
+      {claimMessage && <p className="game-message">{claimMessage}</p>}
+
+      {gameState.status === "COMPLETED" && (
+        <div className="game-result">
+          <p>{gameResultMessage(gameState)}</p>
+        </div>
+      )}
+
 
       <button
         onClick={handleNewGame}>New Game

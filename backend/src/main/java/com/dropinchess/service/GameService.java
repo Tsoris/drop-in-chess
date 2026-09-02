@@ -54,6 +54,11 @@ public class GameService {
         return this.activeGames.values();
     }
 
+    public boolean claimDraw(UUID gameId) {
+        Game game = getGame(gameId);
+        return game != null && game.claimDraw();
+    }
+
 
     /**
      * Attempts to apply a move to an active game.
@@ -81,6 +86,19 @@ public class GameService {
 
         Game game = getGame(gameId);
         Board board = game.getBoard();
+
+        if (game.isCompleted()) {
+            String boardFen = board.getFen();
+            return new MoveResponse(
+                    false,
+                    boardFen.equals(checkFen),
+                    game.getGameStatus(),
+                    game.getGameResult(),
+                    game.getGameEndReason(),
+                    game.getAvailableDrawClaims(),
+                    boardFen
+            );
+        }
 
         Move attempt;
 
@@ -127,6 +145,10 @@ public class GameService {
             return new MoveResponse(
                     false,
                     synchronizedBoards,
+                    game.getGameStatus(),
+                    game.getGameResult(),
+                    game.getGameEndReason(),
+                    game.getAvailableDrawClaims(),
                     boardFen
             );
         }
@@ -140,6 +162,8 @@ public class GameService {
         }
 
         String boardFenAfterMove = board.getFen();
+        game.updateLastActivity();
+        game.evaluatePosition();
 
         boolean areBoardsSynchronized = boardFenAfterMove.equals(checkFen);
 
@@ -149,10 +173,13 @@ public class GameService {
                     gameId, boardFenAfterMove, checkFen
             );
         }
-
         return new MoveResponse(
                 success,
                 areBoardsSynchronized,
+                game.getGameStatus(),
+                game.getGameResult(),
+                game.getGameEndReason(),
+                game.getAvailableDrawClaims(),
                 boardFenAfterMove
         );
     }

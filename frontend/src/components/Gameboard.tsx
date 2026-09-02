@@ -1,36 +1,30 @@
 import { Chess, type Square } from 'chess.js';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Chessboard, type SquareHandlerArgs } from 'react-chessboard';
+import type { GameState, MoveResponse } from '../types/GameStatus';
 
 type GameBoardProps = {
   gameId: string | undefined;
   chessPosition: string;
+  gameState: GameState;
+  onGameStateChange: (state: GameState) => void;
 };
 
 type MoveRequest = {
   from: string;
   to: string;
-  promotion?: 'q' | 'r' |'s'| 'n',
+  promotion?: 'q' | 'r' | 'b' | 'n',
   checkFen: string;
 };
 
-function GameBoard({ gameId, chessPosition }: GameBoardProps) {
+function GameBoard({ gameId, chessPosition, gameState, onGameStateChange }: GameBoardProps) {
 
   const [currChessPosition, setCurrChessPosition] = useState(chessPosition);
   const [moveFrom, setMoveFrom] = useState('');
   const [optionSquares, setOptionSquares] = useState({});
 
-  const chessGameRef = useRef(new Chess());
+  const chessGameRef = useRef(new Chess(chessPosition));
   const chessGame = chessGameRef.current;
-
-  useEffect(() => {
-    setCurrChessPosition(chessPosition);
-    chessGame.load(chessPosition);
-
-    setMoveFrom('');
-    setOptionSquares({});
-  }, [chessPosition]);
-
 
   function getMoveOptions(square: Square) {
     const moves = chessGame.moves({
@@ -70,6 +64,10 @@ function GameBoard({ gameId, chessPosition }: GameBoardProps) {
     square,
     piece
   }: SquareHandlerArgs) {
+
+    if (gameState.status !== "IN_PROGRESS") {
+      return;
+    }
     // piece clicked to move
     if (!moveFrom && piece) {
       // get the move options for the square
@@ -152,7 +150,7 @@ function GameBoard({ gameId, chessPosition }: GameBoardProps) {
         body: JSON.stringify(moveRequest)
       });
 
-      const data = await response.json();
+      const data: MoveResponse = await response.json();
 
       if (!response.ok) {
         console.error("Fail to apply move:");
@@ -165,6 +163,12 @@ function GameBoard({ gameId, chessPosition }: GameBoardProps) {
         chessGame.load(data.fen);
         setCurrChessPosition(data.fen);
       }
+      onGameStateChange({
+        status: data.gameStatus,
+        result: data.gameResult,
+        endReason: data.gameEndReason,
+        availableDrawClaims: data.availableDrawClaims ?? []
+      });
     } catch (error) {
       console.error("Failed to connect to server: ", error);
     }

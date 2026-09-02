@@ -554,18 +554,18 @@ Potential testing layers:
 -   [x] Display the position
 -   [x] Allow legal moves
 -   [x] Update game state
--   [ ] Detect game completion
+-   [x] Detect game completion
 
 ### Milestone 3 --- Position System
 
--   [ ] Store candidate positions
--   [ ] Select a starting position
--   [ ] Define eligibility rules
+-   [x] Store candidate positions
+-   [x] Select a starting position
+-   [x] Define eligibility rules
 -   [ ] Source positions from real games
 
 ### Milestone 4 --- Multiplayer
 
--   [ ] Create game sessions
+-   [x] Create game sessions
 -   [ ] Match two players
 -   [ ] Add WebSocket communication
 -   [ ] Synchronize moves
