@@ -1,3 +1,4 @@
+import { apiUrl } from "../lib/api";
 import { useNavigate, useParams } from "react-router-dom";
 import Gameboard from "../components/Gameboard";
 import { useEffect, useState } from "react";
@@ -74,7 +75,7 @@ export const PlayPage = () => {
 
   async function handleNewGame() {
     try {
-      const response = await fetch("http://localhost:8080/games", {
+      const response = await fetch(apiUrl("/games"), {
         method: "POST"
       });
 
@@ -103,7 +104,7 @@ export const PlayPage = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/games/${gameId}/draw-claim`,
+        apiUrl(`/games/${gameId}/draw-claim`),
         { method: "POST" }
       );
       const data: GameResponse = await response.json();
@@ -133,7 +134,7 @@ export const PlayPage = () => {
 
   // Load the authoritative game state whenever the game ID in the URL changes.
   useEffect(() => {
-    fetch(`http://localhost:8080/games/${gameId}`)
+    fetch(apiUrl(`/games/${gameId}`))
       .then(response => {
         if (!response.ok) {
           throw new Error(
@@ -232,3 +233,4 @@ export const PlayPage = () => {
 };
 
 export default PlayPage;
+

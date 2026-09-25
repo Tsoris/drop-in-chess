@@ -1,3 +1,4 @@
+import { apiUrl } from "../lib/api";
 import { Chess, type Square } from 'chess.js';
 import { useRef, useState } from 'react';
 import { Chessboard, type SquareHandlerArgs } from 'react-chessboard';
@@ -142,7 +143,7 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange }: Game
     setOptionSquares({});
 
     try {
-      const response = await fetch(`http://localhost:8080/games/${gameId}/move`, {
+      const response = await fetch(apiUrl(`/games/${gameId}/move`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -186,3 +187,4 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange }: Game
 }
 
 export default GameBoard;
+

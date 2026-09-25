@@ -1,3 +1,4 @@
+import { apiUrl } from "../lib/api";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +22,7 @@ export const LandingPage = () => {
         const existingGameId = sessionStorage.getItem("gameId");
         if (existingGameId) {
             const response = await fetch(
-                `http://localhost:8080/games/${existingGameId}`
+                apiUrl(`/games/${existingGameId}`)
             );
 
             if (response.ok) {
@@ -33,7 +34,7 @@ export const LandingPage = () => {
         }
 
         try {
-            const response = await fetch("http://localhost:8080/games", {
+            const response = await fetch(apiUrl("/games"), {
                 method: "POST"
             });
 
@@ -71,7 +72,7 @@ export const LandingPage = () => {
 
         try {
             const response = await fetch(
-                `http://localhost:8080/games/${gameId}`
+                apiUrl(`/games/${gameId}`)
             );
             if (!response.ok) {
                 showRestoreError("Invalid or expired Session ID.");
