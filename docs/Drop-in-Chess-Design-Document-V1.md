@@ -47,7 +47,7 @@ initial version.
 
 -   online multiplayer
 -   elo system
--   starting positions are evaluated for advantage
+-   live engine evaluation during gameplay
 -   turn by turn evaluation
 
 ------------------------------------------------------------------------
@@ -99,7 +99,7 @@ Describe what happens from the player's perspective.
 
 ## 5. Starting Position Requirements
 
-Define what makes a chess position eligible to be used.
+Starting-position sourcing, offline filtering, and collection targets are defined in the [Position Generation Workflow](Position-Generation-Workflow.md). The requirements below summarize that plan.
 
 Questions to answer:
 
@@ -112,11 +112,11 @@ Questions to answer:
     -   A starting position must represent a valid chess state from
         which legal play can continue.
 -   Are materially or positionally imbalanced positions allowed in V1?
-    -   Yes
+    -   Material imbalance is allowed if Stockfish rates the position within the configured balance window; see the [Position Generation Workflow](Position-Generation-Workflow.md).
 -   Should positions with forced checkmate be excluded?
-    -   Yes
+    -   Reject mate scores found at the configured search budget; finite analysis cannot guarantee there is no deeper forced mate.
 -   Should positions come from real games?
-    -   Yes
+    -   Yes, from Lichess Elite PGNs; see the [Position Generation Workflow](Position-Generation-Workflow.md).
 -   Should the same position be reusable?
     -   Yes
 -   How will position difficulty eventually be determined?
@@ -158,11 +158,7 @@ deferred until a later version.
 
 ### 6.3 Position Storage / Database
 
-Technology: - TBD
-
-V1 only requires a way to store and retrieve multiple curated starting
-positions. A full database is not required for the initial local
-prototype.
+Technology: JSON collection loaded into memory. The offline importer produces the collection described in the [Position Generation Workflow](Position-Generation-Workflow.md). A database is not required for V1.
 
 Future database responsibilities may include:
 
@@ -215,52 +211,49 @@ Frontend Responsibilities:
 - Pass attempted moves to the frontend game logic.
 - Update the displayed position when game state changes.
 
-### 6.7 Chess Analysis --- Future
+### 6.7 Offline Position Analysis
 
-Chess-engine analysis is not required for V1. V1 may use materially or
-positionally imbalanced positions and will not automatically evaluate
-starting-position advantage.
+Stockfish evaluates candidate positions during offline generation to select even starting positions. It does not provide live evaluation during gameplay. PGN sourcing, candidate selection, engine filtering, and output metadata are covered in the [Position Generation Workflow](Position-Generation-Workflow.md).
 
-A future version may integrate Stockfish or another engine to:
-
--   Evaluate candidate starting positions.
--   Filter or classify positions by balance.
--   Estimate position difficulty.
--   Analyze completed games.
+Position difficulty and post-game analysis remain future features.
 
 ------------------------------------------------------------------------
 
 ## 7. Architecture Diagram
 
-Add a diagram showing the major components.
+This sequence shows the intended local gameplay flow. Starting positions are prepared offline as described in the [Position Generation Workflow](Position-Generation-Workflow.md); Stockfish does not run during gameplay.
 
-Possible initial structure:
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as React Frontend
+    participant Backend as Spring Boot Backend
+    participant Positions as Position Repository (JSON)
+    participant Rules as chesslib
 
-``` text
-Browser
-   |
-   v
-React / TypeScript Frontend
-   |
-   | HTTP
-   v
-Java / Spring Boot Backend
-   |
-   +---- Game Management
-   |
-   +---- Position Selection
-   |
-   +---- Chess Rules
-   |
-   +---- Position Storage
+    User->>UI: Select Play
+    UI->>Backend: Request new game
+    Backend->>Positions: Select a starting position
+    Positions-->>Backend: FEN and metadata
+    Backend->>Rules: Initialize board from FEN
+    Backend-->>UI: Game ID, position, and status
+    UI-->>User: Display chessboard
+
+    loop Play until the game ends
+        User->>UI: Attempt a move
+        UI->>Backend: Submit move
+        Backend->>Rules: Validate move and determine game status
+        Rules-->>Backend: Move result and board state
+        Backend-->>UI: Updated state or rejected move
+        UI-->>User: Update board and status
+    end
+
+    UI-->>User: Display final result
 ```
 
-WebSockets, matchmaking, user accounts, ratings, and Stockfish analysis
-are future architecture concerns and are not required for V1.
+The frontend uses chess.js for responsive move interaction and highlighting. The backend owns the authoritative game state. Draw offers and resignation also go through the backend; they are omitted here to keep the main sequence readable.
 
-Link the finished diagram here:
-
-`docs/diagrams/architecture.drawio`
+WebSockets, matchmaking, user accounts, and ratings remain future concerns. The separate offline sourcing and engine-filtering sequence is in the [Position Generation Workflow](Position-Generation-Workflow.md#import-sequence).
 
 ------------------------------------------------------------------------
 
@@ -294,8 +287,7 @@ Potential responsibilities/data:
 -   Game phase
 -   Source
 
-Evaluation and difficulty metadata are future concerns and are not
-required for V1.
+Offline evaluation and source metadata are described in the [Position Generation Workflow](Position-Generation-Workflow.md). Difficulty classification remains a future concern.
 
 ### Move
 
@@ -363,8 +355,7 @@ Questions to address at that stage include:
 
 Document persistent data once database requirements become clearer.
 
-V1 may not require a relational database. Curated starting positions can
-initially be stored using a simpler local representation.
+V1 stores generated positions in JSON, with fields defined in the [Position Generation Workflow](Position-Generation-Workflow.md). A relational database can be introduced later.
 
 Potential future tables:
 
@@ -398,14 +389,11 @@ selecting a non-opening position and playing it correctly to completion.
 Online multiplayer, matchmaking, accounts, and network synchronization
 are deferred until the local game loop works.
 
-### Decision: V1 Does Not Require Position Evaluation
+### Decision: Offline Position Evaluation
 
 **Reason:**
 
-V1 accepts materially or positionally imbalanced positions and does not
-need to determine whether positions are fair. Starting positions can be
-curated without integrating a chess engine. Automated evaluation and
-balance filtering can be added in a later version.
+Use Stockfish during generation to select even positions from real games, then load the saved collection during gameplay. This keeps engine work outside the interactive game loop. Source selection, filtering, and JSON storage are defined in the [Position Generation Workflow](Position-Generation-Workflow.md).
 
 ### Decision: Java + Spring Boot Backend
 
@@ -456,13 +444,9 @@ TBD.
 
 Add new decisions as the architecture evolves.
 
-### Decision: SupaBase (PostgreSQL)
+### Future Option: Supabase (PostgreSQL)
 
-**Reason:** 
-
-**PostgreSQL** is a production-grade relational database well suited for filtering chess positions by attributes such as phase, evaluation, mate status, and engine depth. PostgreSQL supports the filtered random-selection queries needed to choose a starting position from thousands of eligible chess positions.
-
-**Supabase** provides managed PostgreSQL hosting, reducing the operational overhead of running the database infrastructure directly. Based on the expected size of Lichess position-evaluation records, the free tier should comfortably support **100,000+ positions** while leaving room for indexes, metadata, and other application data.
+V1 uses the JSON collection defined in the [Position Generation Workflow](Position-Generation-Workflow.md). Supabase/PostgreSQL can be considered later for persistent games, users, and position management without redeploying the application.
 
 ### Decision: OpenAI's GPT-4o/Anthropic's Claude
 
@@ -476,8 +460,7 @@ Use to add a theme and description of the starting position. To reduce  hallucin
 
 **Estimated Time:** 500 positions/min
 
-**for best result parsing entire games and evaluating positions to allow description
-to explain the idea leading up to the current position; change source: PNGMentor**
+For game sourcing and replay, follow the [Position Generation Workflow](Position-Generation-Workflow.md). Historical moves may provide context for future descriptions; description generation remains separate from the initial import pipeline.
 
 Common Themes [set as an enum]:
 - PASSED_PAWN
@@ -561,7 +544,8 @@ Potential testing layers:
 -   [x] Store candidate positions
 -   [x] Select a starting position
 -   [x] Define eligibility rules
--   [ ] Source positions from real games
+-   [ ] Source positions from real games using the [Position Generation Workflow](Position-Generation-Workflow.md)
+-   [ ] Filter positions offline with Stockfish and produce the 500/500 JSON collection
 
 ### Milestone 4 --- Multiplayer
 
@@ -581,7 +565,7 @@ Potential testing layers:
 
 ### Milestone 6 --- Extended Features
 
--   [ ] Starting-position evaluation
+-   [ ] Extended position analysis beyond the initial offline balance filter
 -   [ ] Ratings
 -   [ ] Position difficulty
 -   [ ] Matchmaking preferences
@@ -595,17 +579,14 @@ Potential testing layers:
 Keep unresolved design questions here rather than forcing an early
 decision.
 
--   How should starting positions be sourced?
-    - https://huggingface.co/datasets/Lichess/chess-position-evaluations
-        - 394,669,566 chess positions evaluated with Stockfish at various depths and node count
--   When should automatic starting-position evaluation be introduced?
+-   Sourcing and offline evaluation follow the [Position Generation Workflow](Position-Generation-Workflow.md). Its open decisions cover phase definitions, sampling, and engine budget.
 -   What evaluation range should eventually count as balanced?
 -   Should players eventually know the starting evaluation?
 -   How should ratings account for unequal positions in a future
     multiplayer version?
 -   How should position difficulty be measured?
 -   What chess library should the Java backend use?
--   How should Stockfish eventually be integrated?
+-   What Stockfish search budget should the offline importer use? See the [Position Generation Workflow](Position-Generation-Workflow.md).
 
 ------------------------------------------------------------------------
 
@@ -622,3 +603,4 @@ Features that are interesting but are not part of the initial MVP.
 -   Position source/history
 -   Spectating
 -   Tournaments
+
