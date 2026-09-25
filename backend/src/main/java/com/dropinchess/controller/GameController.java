@@ -69,24 +69,6 @@ public class GameController {
     }
 
     /**
-     * Retrieves all currently active games.
-     *
-     * This endpoint is intended for development and administrative
-     * purposes and provides a view of the games currently stored in memory.
-     *
-     * @return a response containing all active games and their current positions
-     */
-    @GetMapping("admin/games")
-    public ResponseEntity<List<GameResponse>> getAllGames() {
-        List<GameResponse> games = gameService.getAllGames()
-                .stream()
-                .map(this::toGameResponse)
-                .toList();
-
-        return ResponseEntity.ok(games);
-    }
-
-    /**
      * Processes a move attempt for an active game.
      *
      * <p>The submitted move is passed to the game service for validation
