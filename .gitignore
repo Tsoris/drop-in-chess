@@ -1,2 +1,5 @@
 .idea
 ChessPGN
+stockfish
+# Local generator checkpoints; the published collection lives in backend resources.
+/backend/generated/

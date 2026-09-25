@@ -22,9 +22,9 @@ class GameControllerTest {
     private GameController gameController;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         gameService = new GameService();
-        gameController = new GameController(gameService);
+        gameController = new GameController(gameService, new com.dropinchess.repository.PositionRepository(new org.springframework.core.io.ClassPathResource("positions/positions.json")));
     }
 
     @Test

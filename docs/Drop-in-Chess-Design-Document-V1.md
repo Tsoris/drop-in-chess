@@ -539,13 +539,18 @@ Potential testing layers:
 -   [x] Update game state
 -   [x] Detect game completion
 
-### Milestone 3 --- Position System
+### Milestone 3 --- Position System (Complete)
 
 -   [x] Store candidate positions
 -   [x] Select a starting position
 -   [x] Define eligibility rules
--   [ ] Source positions from real games using the [Position Generation Workflow](Position-Generation-Workflow.md)
--   [ ] Filter positions offline with Stockfish and produce the 500/500 JSON collection
+-   [x] Source positions from real games using the [Position Generation Workflow](Position-Generation-Workflow.md)
+-   [x] Filter positions offline with Stockfish and produce the 500/500 JSON collection
+-   [x] Preserve source move history, opening metadata, and generation settings
+-   [x] Support duplicate filtering, phase quotas, and resumable JSON checkpoints
+-   [x] Load the completed collection into the backend for new games
+
+Verified with 37 passing backend tests, including all 1,000 published positions and both position-selection HTTP endpoints.
 
 ### Milestone 4 --- Multiplayer
 
@@ -603,4 +608,3 @@ Features that are interesting but are not part of the initial MVP.
 -   Position source/history
 -   Spectating
 -   Tournaments
-
