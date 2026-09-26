@@ -315,16 +315,16 @@ Divide elapsedMillis by 1000 for seconds or 60000 for minutes. Existing collecti
 
 ## Backend use of the published collection
 
-The completed backend/generated/v1-positions.json collection (500 middlegames and 500 endgames) is copied to backend/src/main/resources/positions/positions.json for application use. The generator output remains a separate checkpoint; generating more positions does not silently replace the runtime resource.
+The completed enriched collection (500 middlegames and 500 endgames) is copied to `backend/src/main/resources/positions/positions.json` for application use. The generator and enrichment outputs remain separate local artifacts; generating more positions or descriptions does not silently replace the runtime resource.
 
-PositionRepository loads the packaged collection once at backend startup. It requires schema version 1, complete=true, a nonempty list, unique IDs, recognized phases, and playable FENs. Invalid or missing data prevents startup with a source-specific error rather than falling back to sample positions. The runtime projection retains ID, phase, and FEN; source history and opening metadata remain in the resource for future features.
+PositionRepository loads the packaged collection once at backend startup. It requires schema version 1, complete=true, a nonempty list, unique IDs, recognized phases, playable FENs, and a valid context state. Invalid or missing data prevents startup with a source-specific error rather than falling back to sample positions. The runtime projection retains ID, phase, FEN, and player-facing guidance while omitting internal evidence and generation metadata.
 
 POST /games and GET /startingFEN both draw uniformly from this shared repository. Their existing response shapes are unchanged. Games use a fresh board from the selected FEN, preserving its move counters but starting fresh repetition history; source moves are not replayed into the live game. Stockfish and the source PGN are not needed during gameplay.
 
 Run BackendApplication in IntelliJ and use the frontend's normal Play action. Restart the backend after replacing the collection resource. For an external collection, set the Spring property dropinchess.positions.location, for example as a BackendApplication program argument:
 
 ```text
---dropinchess.positions.location=file:C:/Users/Tim/Software Engineer Stuff/Drop In Chess/backend/generated/v1-positions.json
+--dropinchess.positions.location=file:C:/Users/Tim/Software Engineer Stuff/Drop In Chess/backend/generated/enrichment/positions-enriched-v5.json
 ```
 
 Quote that entire argument when entering it in IntelliJ because it contains spaces. Default loading from classpath:positions/positions.json requires no extra arguments.
