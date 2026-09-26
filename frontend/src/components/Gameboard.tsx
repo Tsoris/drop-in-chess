@@ -4,6 +4,19 @@ import { useRef, useState } from 'react';
 import { Chessboard, type SquareHandlerArgs } from 'react-chessboard';
 import type { GameState, MoveResponse } from '../types/GameStatus';
 
+const BOARD_SQUARES = Array.from({ length: 8 }, (_, rankIndex) =>
+  "abcdefgh".split("").map(file => `${file}${rankIndex + 1}` as Square)
+).flat();
+
+export function checkedKingSquare(game: Chess): Square | null {
+  if (!game.isCheck()) return null;
+  const checkedSide = game.turn();
+  return BOARD_SQUARES.find(square => {
+    const piece = game.get(square);
+    return piece?.type === "k" && piece.color === checkedSide;
+  }) ?? null;
+}
+
 type GameBoardProps = {
   gameId: string | undefined;
   chessPosition: string;
@@ -177,11 +190,21 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
     }
   }
 
+  const kingInCheck = checkedKingSquare(chessGame);
+  const checkSquareStyles: Record<string, React.CSSProperties> = kingInCheck
+    ? {
+        [kingInCheck]: {
+          background: 'radial-gradient(circle, rgba(239, 68, 68, 0.92) 0%, rgba(153, 27, 27, 0.82) 100%)',
+          boxShadow: 'inset 0 0 0 4px rgba(127, 29, 29, 0.9)'
+        }
+      }
+    : {};
+
   const chessboardOptions = {
     allowDragging: false,
     onSquareClick,
     position: currChessPosition,
-    squareStyles: optionSquares,
+    squareStyles: { ...optionSquares, ...checkSquareStyles },
     id: 'click-to-move'
   };
 
