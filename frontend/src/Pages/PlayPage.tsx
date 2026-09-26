@@ -140,6 +140,10 @@ export const PlayPage = () => {
       ? `${positionDetails.phase === "MIDDLEGAME" ? "Middlegame" : "Endgame"} position`
       : "Loading position details…");
 
+  const feedbackUrl = positionDetails?.positionId
+    ? `https://docs.google.com/forms/d/e/1FAIpQLSdes_bgBxmxcdWKF11fRZcgv8mUp3o4s2UEBVkRXWQgyfVdRw/viewform?usp=pp_url&entry.976582976=${encodeURIComponent(positionDetails.positionId)}`
+    : null;
+
   return (
     <main className="play-page">
       <section className="play-workspace" aria-label="Chess position workspace">
@@ -184,6 +188,8 @@ export const PlayPage = () => {
               </a>
             </div>
           )}
+
+
 
           {descriptionsAvailable ? (
             <div className="position-help" aria-label="Optional position guidance">
@@ -238,6 +244,19 @@ export const PlayPage = () => {
             <button type="button" className="secondary-action" onClick={copyGameId}>Copy session ID</button>
             <button type="button" className="primary-action" onClick={handleNewGame}>New position</button>
           </div>
+
+
+          {feedbackUrl && (
+            <a
+              className="feedback-action"
+              href={feedbackUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Give Feedback ↗
+            </a>
+          )}
+
           <div className="session-message" aria-live="polite">
             <AnimatePresence>
               {copyMessage && (

@@ -393,6 +393,38 @@
     font-size: 0.75rem;
 }
 
+.feedback-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.78rem 1rem;
+
+    border: 1px solid rgba(77, 124, 255, 0.35);
+    border-radius: 8px;
+    background: var(--play-accent-soft);
+
+    color: #9db5ff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+
+    cursor: pointer;
+    transition:
+        background 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease;
+}
+
+.feedback-action:hover {
+    background: rgba(77, 124, 255, 0.2);
+    border-color: rgba(77, 124, 255, 0.55);
+    color: #c1d0ff;
+}
+
 @media (max-width: 640px) {
     .play-page {
         padding-inline: 0;
