@@ -9,6 +9,7 @@ type GameBoardProps = {
   chessPosition: string;
   gameState: GameState;
   onGameStateChange: (state: GameState) => void;
+  onPositionChange: (fen: string) => void;
 };
 
 type MoveRequest = {
@@ -18,7 +19,7 @@ type MoveRequest = {
   checkFen: string;
 };
 
-function GameBoard({ gameId, chessPosition, gameState, onGameStateChange }: GameBoardProps) {
+function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPositionChange }: GameBoardProps) {
 
   const [currChessPosition, setCurrChessPosition] = useState(chessPosition);
   const [moveFrom, setMoveFrom] = useState('');
@@ -164,6 +165,7 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange }: Game
         chessGame.load(data.fen);
         setCurrChessPosition(data.fen);
       }
+      onPositionChange(data.fen);
       onGameStateChange({
         status: data.gameStatus,
         result: data.gameResult,

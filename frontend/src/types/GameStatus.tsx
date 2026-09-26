@@ -23,9 +23,30 @@ export type GameState = {
   availableDrawClaims: GameEndReason[];
 };
 
+export type PositionContext = {
+  availability: "AVAILABLE" | "UNAVAILABLE";
+  quality: "AI_VERIFIED" | "AI_REJECTED";
+  openingContext: { summary: string } | null;
+  positionGuide: { summary: string; themes: string[] } | null;
+  possiblePlans: {
+    white: { summary: string };
+    black: { summary: string };
+  } | null;
+  message: string | null;
+};
+
 export type GameResponse = GameState & {
   gameId: string;
   fen: string;
+  positionId: string;
+  phase: "MIDDLEGAME" | "ENDGAME";
+  context: PositionContext;
+  source?: {
+    gameUrl: string;
+    eco: string;
+    opening: string;
+    variation: string | null;
+  };
 };
 
 export type MoveResponse = {
