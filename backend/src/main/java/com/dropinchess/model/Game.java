@@ -17,7 +17,11 @@ import java.util.UUID;
  */
 public class Game {
     private final UUID id;
+    private final String positionId;
+    private final String phase;
     private final String startingFen;
+    private final PositionContext positionContext;
+    private final PositionSource positionSource;
     private final Board board;
     private GameStatus gameStatus;
     private GameResult gameResult;
@@ -25,8 +29,17 @@ public class Game {
     private Instant lastActivity;
 
     public Game(UUID id, String startingFen, Board board) {
+        this(id, null, null, startingFen, board, null, null);
+    }
+
+    public Game(UUID id, String positionId, String phase, String startingFen, Board board,
+                PositionContext positionContext, PositionSource positionSource) {
         this.id = id;
+        this.positionId = positionId;
+        this.phase = phase;
         this.startingFen = startingFen;
+        this.positionContext = positionContext;
+        this.positionSource = positionSource;
         this.board = board;
         this.gameStatus = GameStatus.IN_PROGRESS;
         this.lastActivity = Instant.now();
@@ -43,6 +56,22 @@ public class Game {
 
     public String getStartingFen(){
         return startingFen;
+    }
+
+    public String getPositionId() {
+        return positionId;
+    }
+
+    public String getPhase() {
+        return phase;
+    }
+
+    public PositionContext getPositionContext() {
+        return positionContext;
+    }
+
+    public PositionSource getPositionSource() {
+        return positionSource;
     }
 
     public Board getBoard() {

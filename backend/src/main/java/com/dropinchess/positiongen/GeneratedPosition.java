@@ -1,7 +1,10 @@
 package com.dropinchess.positiongen;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record GeneratedPosition(String id, PositionClassifier.Phase phase,
         PositionClassifier.EndgameType endgameType, String fen, Source source,
         Analysis analysis, Selection selection) {

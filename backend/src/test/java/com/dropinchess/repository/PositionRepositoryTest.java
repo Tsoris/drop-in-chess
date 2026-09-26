@@ -11,6 +11,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tools.jackson.databind.json.JsonMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -24,6 +26,10 @@ class PositionRepositoryTest {
         assertEquals(1000, repository.allPositions().size());
         assertEquals(500, repository.allPositions().stream().filter(p -> p.phase().equals("MIDDLEGAME")).count());
         assertEquals(500, repository.allPositions().stream().filter(p -> p.phase().equals("ENDGAME")).count());
+        assertEquals(550, repository.allPositions().stream()
+                .filter(p -> p.context().availability().equals("AVAILABLE")).count());
+        assertEquals(450, repository.allPositions().stream()
+                .filter(p -> p.context().availability().equals("UNAVAILABLE")).count());
         try (var input = resource.getInputStream()) {
             var collection = JsonMapper.builder().build().readValue(input, PositionWriter.Collection.class);
             for (var position : collection.positions()) PositionWriter.validate(position, collection.generation());
@@ -37,12 +43,25 @@ class PositionRepositoryTest {
         var mvc = MockMvcBuilders.standaloneSetup(new GameController(service, repository), new PositionController(repository)).build();
         var mapper = JsonMapper.builder().build();
         Set<String> fens = repository.allPositions().stream().map(PositionRepository.Position::fen).collect(Collectors.toSet());
+        Map<String, PositionRepository.Position> byFen = repository.allPositions().stream()
+                .collect(Collectors.toMap(PositionRepository.Position::fen, Function.identity()));
         String starting = mvc.perform(get("/startingFEN")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertTrue(fens.contains(mapper.readTree(starting).get("fen").asText()));
         String created = mvc.perform(post("/games")).andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         var response = mapper.readTree(created);
         assertTrue(fens.contains(response.get("fen").asText()));
         assertEquals("IN_PROGRESS", response.get("status").asText());
+        PositionRepository.Position selected = byFen.get(response.get("fen").asText());
+        assertEquals(selected.id(), response.get("positionId").asText());
+        assertEquals(selected.phase(), response.get("phase").asText());
+        assertEquals(selected.context().availability(), response.get("context").get("availability").asText());
+        assertEquals(selected.source().eco(), response.get("source").get("eco").asText());
+        assertEquals(selected.source().gameUrl(), response.get("source").get("gameUrl").asText());
+        String restored = mvc.perform(get("/games/{gameId}", response.get("gameId").asText()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        var restoredResponse = mapper.readTree(restored);
+        assertEquals(response.get("positionId"), restoredResponse.get("positionId"));
+        assertEquals(response.get("context"), restoredResponse.get("context"));
         var game = service.getAllGames().iterator().next();
         var move = game.getBoard().legalMoves().getFirst();
         var expected = new com.github.bhlangonijr.chesslib.Board(); expected.loadFromFen(game.getStartingFen()); expected.doMove(move, true);

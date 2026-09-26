@@ -37,9 +37,8 @@ public class GameController {
     @PostMapping("/games")
     public ResponseEntity<GameResponse> createGame() {
 
-        String randomFen = positions.randomPosition().fen();
-
-        Game game = gameService.createGame(randomFen);
+        PositionRepository.Position position = positions.randomPosition();
+        Game game = gameService.createGame(position);
         GameResponse response = toGameResponse(game);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -124,7 +123,11 @@ public class GameController {
                 game.getGameResult(),
                 game.getGameEndReason(),
                 game.getAvailableDrawClaims(),
-                game.getBoard().getFen()
+                game.getBoard().getFen(),
+                game.getPositionId(),
+                game.getPhase(),
+                game.getPositionContext(),
+                game.getPositionSource()
         );
     }
 }

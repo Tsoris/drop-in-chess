@@ -3,6 +3,8 @@ package com.dropinchess.repository;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.bhlangonijr.chesslib.Board;
 import com.github.bhlangonijr.chesslib.Piece;
+import com.dropinchess.model.PositionContext;
+import com.dropinchess.model.PositionSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Repository;
@@ -16,7 +18,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Repository
 public class PositionRepository {
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Position(String id, String phase, String fen) {}
+    public record Position(String id, String phase, String fen, PositionSource source, PositionContext context) {}
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record CollectionFile(int schemaVersion, boolean complete, List<Position> positions) {}
 
@@ -40,6 +42,11 @@ public class PositionRepository {
                 if (position.fen() == null || position.fen().split(" ").length != 6) {
                     throw new IllegalArgumentException("Invalid FEN for " + position.id());
                 }
+                validateContext(position);
+                if (position.source() == null || blank(position.source().gameUrl())
+                        || blank(position.source().eco()) || blank(position.source().opening())) {
+                    throw new IllegalArgumentException("Missing source details for " + position.id());
+                }
                 Board board = new Board();
                 board.loadFromFen(position.fen());
                 if (board.getPieceLocation(Piece.WHITE_KING).size() != 1
@@ -59,4 +66,31 @@ public class PositionRepository {
     }
 
     public List<Position> allPositions() { return positions; }
+
+    private static void validateContext(Position position) {
+        PositionContext context = position.context();
+        if (context == null) {
+            throw new IllegalArgumentException("Missing context for " + position.id());
+        }
+        if ("AVAILABLE".equals(context.availability())) {
+            if (!"AI_VERIFIED".equals(context.quality())
+                    || context.openingContext() == null || blank(context.openingContext().summary())
+                    || context.positionGuide() == null || blank(context.positionGuide().summary())
+                    || context.positionGuide().themes() == null || context.positionGuide().themes().isEmpty()
+                    || context.possiblePlans() == null
+                    || context.possiblePlans().white() == null || blank(context.possiblePlans().white().summary())
+                    || context.possiblePlans().black() == null || blank(context.possiblePlans().black().summary())) {
+                throw new IllegalArgumentException("Invalid available context for " + position.id());
+            }
+            return;
+        }
+        if (!"UNAVAILABLE".equals(context.availability())
+                || !"AI_REJECTED".equals(context.quality()) || blank(context.message())) {
+            throw new IllegalArgumentException("Invalid unavailable context for " + position.id());
+        }
+    }
+
+    private static boolean blank(String value) {
+        return value == null || value.isBlank();
+    }
 }

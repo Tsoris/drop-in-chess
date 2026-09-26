@@ -3,6 +3,8 @@ package com.dropinchess.DataTransferObject;
 import com.dropinchess.model.GameStatus;
 import com.dropinchess.model.GameEndReason;
 import com.dropinchess.model.GameResult;
+import com.dropinchess.model.PositionContext;
+import com.dropinchess.model.PositionSource;
 
 import java.util.Set;
 import java.util.UUID;
@@ -16,5 +18,9 @@ public record GameResponse(
         GameResult result,
         GameEndReason endReason,
         Set<GameEndReason> availableDrawClaims,
-        String fen
+        String fen,
+        String positionId,
+        String phase,
+        PositionContext context,
+        PositionSource source
 ) {}

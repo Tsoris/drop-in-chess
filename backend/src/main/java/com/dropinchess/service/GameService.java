@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.dropinchess.model.Game;
+import com.dropinchess.repository.PositionRepository;
 import com.dropinchess.DataTransferObject.MoveResponse;
 import com.github.bhlangonijr.chesslib.Board;
 import com.github.bhlangonijr.chesslib.Square;
@@ -30,12 +31,23 @@ public class GameService {
      * @return the UUID assigned to the new game
      */
     public Game createGame(String startingFen) {
+        return createGame(null, null, startingFen, null, null);
+    }
+
+    public Game createGame(PositionRepository.Position position) {
+        Objects.requireNonNull(position, "position");
+        return createGame(position.id(), position.phase(), position.fen(), position.context(), position.source());
+    }
+
+    private Game createGame(String positionId, String phase, String startingFen,
+                            com.dropinchess.model.PositionContext context,
+                            com.dropinchess.model.PositionSource source) {
         Board board = new Board();
         board.loadFromFen(startingFen);
 
         UUID gameId = UUID.randomUUID();
 
-        Game newGame = new Game(gameId, startingFen, board);
+        Game newGame = new Game(gameId, positionId, phase, startingFen, board, context, source);
 
         activeGames.put(gameId, newGame);
 
