@@ -148,7 +148,7 @@ export const PlayPage = () => {
     <main className="play-page">
       <section className="play-workspace" aria-label="Chess position workspace">
         <div className="board-section">
-          <div className="turn-indicator">
+          <div className={`turn-indicator${sideToMove === "Black" ? " black-to-move" : ""}`}>
             <span className="turn-dot" aria-hidden="true" />
             <strong>{sideToMove} to move</strong>
             {positionDetails && <span>{positionDetails.phase === "MIDDLEGAME" ? "Middlegame" : "Endgame"}</span>}

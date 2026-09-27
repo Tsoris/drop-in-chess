@@ -9,7 +9,12 @@ test("holds game UI until health succeeds", async () => {
   vi.spyOn(globalThis, "fetch").mockImplementation(ready);
   render(<BackendHealthStatus><button>Play Now</button></BackendHealthStatus>);
   expect(screen.queryByText("Play Now")).not.toBeInTheDocument();
-  expect(await screen.findByText("Play Now")).toBeInTheDocument();
+  const board = screen.getByRole("group", { name: "Knight mini-game board" });
+  const proceed = await screen.findByRole("button", { name: "Continue to Drop in Chess" });
+  expect(screen.getByRole("group", { name: "Knight mini-game board" })).toBe(board);
+  expect(screen.queryByText("Play Now")).not.toBeInTheDocument();
+  fireEvent.click(proceed);
+  expect(screen.getByText("Play Now")).toBeInTheDocument();
 });
 
 test("shows wake-up feedback then continues after a retry", async () => {
@@ -17,8 +22,10 @@ test("shows wake-up feedback then continues after a retry", async () => {
   vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("sleeping")).mockRejectedValueOnce(new Error("sleeping")).mockImplementation(ready);
   render(<BackendHealthStatus>Game ready</BackendHealthStatus>);
   await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
-  expect(screen.getByRole("status")).toHaveTextContent("may be waking up");
+  expect(screen.getByText("Waiting for the Drop in Chess server...")).toBeInTheDocument();
   await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+  expect(screen.queryByText("Game ready")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Continue to Drop in Chess" }));
   expect(screen.getByText("Game ready")).toBeInTheDocument();
 });
 
@@ -30,6 +37,8 @@ test("times out even a stuck request and supports retry", async () => {
   expect(screen.getByRole("alert")).toBeInTheDocument();
   mock.mockImplementation(ready);
   await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Try again" })); });
+  expect(screen.queryByText("Game ready")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Continue to Drop in Chess" }));
   expect(screen.getByText("Game ready")).toBeInTheDocument();
 });
 

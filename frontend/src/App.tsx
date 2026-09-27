@@ -1,17 +1,21 @@
 import BackendHealthStatus from "./components/BackendHealthStatus";
 import './App.css';
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import LandingPage from "./Pages/LandingPage";
 import PlayPage from "./Pages/PlayPage";
 import Footer from "./components/Footer";
+import { useState } from "react";
 import Header from './components/Header';
 
-function GameRoutes() {
-    const location = useLocation();
+export function GameRoutes() {
+    const navigate = useNavigate();
+    const [showKnightQuest, setShowKnightQuest] = useState(false);
+
     return (
-        <BackendHealthStatus key={location.pathname}>
+        <BackendHealthStatus onContinue={() => { setShowKnightQuest(false); navigate("/", { replace: true }); }} showKnightQuest={showKnightQuest}>
             <Routes>
-                <Route path="/" element={<LandingPage/>}/>
+                <Route path="/" element={<LandingPage onPlayKnightQuest={() => setShowKnightQuest(true)}/>}/>
+                <Route path="/knight-game" element={<Navigate to="/" replace />}/>
                 <Route path="/game/:gameId" element={<PlayPage/>}/>
             </Routes>
         </BackendHealthStatus>
@@ -33,4 +37,3 @@ function App() {
 }
 
 export default App;
-

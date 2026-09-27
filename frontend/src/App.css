@@ -494,3 +494,13 @@
   text-align: center;
 }
 .backend-startup p { line-height: 1.6; }
+
+.turn-indicator.black-to-move > strong { color: #f0bc75; }
+.turn-indicator.black-to-move .turn-dot { background: #f0bc75; box-shadow: 0 0 10px rgba(240, 188, 117, 0.45); }
+
+.theme-controls { display: flex; justify-content: flex-end; padding: .75rem 1rem 0; }
+.theme-toggle { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: 8px; background: var(--code-bg); color: var(--text-h); font: inherit; font-size: .8rem; cursor: pointer; }
+.theme-toggle:hover { border-color: var(--accent); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.theme-toggle { justify-content: center; width: 44px; height: 44px; padding: 0; }

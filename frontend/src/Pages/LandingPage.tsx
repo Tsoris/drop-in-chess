@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
  * Allows the user to resume the current browser session, create a new game,
  * or restore an existing game using a session ID.
  */
-export const LandingPage = () => {
+export const LandingPage = ({ onPlayKnightQuest }: { onPlayKnightQuest?: () => void }) => {
     const navigate = useNavigate();
 
 
@@ -139,6 +139,8 @@ export const LandingPage = () => {
                 </AnimatePresence>
 
             </div>
+            <p>Like Knight Quest?</p>
+            <button onClick={onPlayKnightQuest}>Play Here</button>
         </main>
     );
 };
