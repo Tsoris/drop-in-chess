@@ -55,7 +55,7 @@ export default function BackendHealthStatus({ children, onContinue, showKnightQu
         {status === "connecting" && "Starting Drop in Chess server..."}
         {status === "waiting" && "Waiting for the Drop in Chess server..."}
         {status === "error" && "The server hasn't responded yet. Please check your connection and try again."}
-        {status === "ready" && "Server ready! Continue whenever you are ready."}
+        {status === "ready" && "Server ready! You can return to Knight Quest from the main page."}
       </p>
       {status === "ready" && <button className="startup-continue" onClick={() => { onContinue?.(); setContinued(true); }}>Continue to Drop in Chess</button>}
       <KnightMiniGame />
