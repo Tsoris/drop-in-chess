@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, test, vi } from "vitest";
 import BackendHealthStatus from "./BackendHealthStatus";
 
-afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); sessionStorage.clear(); vi.useRealTimers(); vi.restoreAllMocks(); });
 const ready = () => Promise.resolve({ ok: true, json: async () => ({ status: "CONNECTED" }) } as Response);
 
 test("holds game UI until health succeeds", async () => {

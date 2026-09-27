@@ -49,6 +49,7 @@ function stateFromResponse(data: GameResponse): GameState {
 
 export const PlayPage = () => {
   const navigate = useNavigate();
+  const [hintsVisible, setHintsVisible] = useState(true);
   const { gameId } = useParams();
   const [chessPosition, setChessPosition] = useState(
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -146,7 +147,12 @@ export const PlayPage = () => {
 
   return (
     <main className="play-page">
-      <section className="play-workspace" aria-label="Chess position workspace">
+      <p className="position-info-intro"><span className="position-info-desktop">Select Show position info to explore ideas and plans for this position, or open the original game to see how it was played.</span><span className="position-info-mobile">Explore ideas and plans below the board, or open the original game to see how it was played.</span></p>
+      <section className={`play-workspace${hintsVisible ? "" : " hints-collapsed"}`} aria-label="Chess position workspace">
+        <div className="board-column">
+          <div className="hints-toggle-bar">
+            <button type="button" aria-expanded={hintsVisible} aria-controls="position-hints" onClick={() => setHintsVisible(value => !value)}>{hintsVisible ? "Hide position info" : "Show position info"}</button>
+          </div>
         <div className="board-section">
           <div className={`turn-indicator${sideToMove === "Black" ? " black-to-move" : ""}`}>
             <span className="turn-dot" aria-hidden="true" />
@@ -155,7 +161,7 @@ export const PlayPage = () => {
           </div>
           <div className="board-stage">
             <Gameboard
-              key={`${gameId}:${chessPosition}`}
+              key={gameId}
               gameId={gameId}
               chessPosition={chessPosition}
               gameState={gameState}
@@ -165,7 +171,61 @@ export const PlayPage = () => {
           </div>
         </div>
 
-        <div className="position-console">
+        <div className="board-controls">
+          <div className="fen-bar">
+            <code>{chessPosition}</code>
+            <button type="button" onClick={copyFen}>{fenCopyMessage || "Copy FEN"}</button>
+          </div>
+
+          {gameState.status === "IN_PROGRESS" && gameState.availableDrawClaims.length > 0 && (
+            <div className="draw-claim">
+              <p>{gameState.availableDrawClaims.includes("REPETITION")
+                ? "A draw by repetition is available."
+                : "A draw under the 50-move rule is available."}</p>
+              <button onClick={handleDrawClaim} disabled={isClaimingDraw}>
+                {isClaimingDraw ? "Claiming…" : "Claim Draw"}
+              </button>
+            </div>
+          )}
+
+          {claimMessage && <p className="game-message">{claimMessage}</p>}
+          {gameState.status === "COMPLETED" && (
+            <div className="game-result"><p>{gameResultMessage(gameState)}</p></div>
+          )}
+
+          <div className="game-actions">
+            <button type="button" className="secondary-action" onClick={copyGameId}>Copy session ID</button>
+            <button type="button" className="primary-action" onClick={handleNewGame}>New position</button>
+          </div>
+
+
+          {feedbackUrl && (
+            <a
+              className="feedback-action"
+              href={feedbackUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Give Feedback ↗
+            </a>
+          )}
+
+          <div className="session-message" aria-live="polite">
+            <AnimatePresence>
+              {copyMessage && (
+                <motion.span
+                  className="session-info"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                >{copyMessage}</motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+        </div>
+
+        <div id="position-hints" className="position-console" role="region" aria-label="Position information and hints" tabIndex={0} hidden={!hintsVisible}>
           <div className="position-heading">
             <div>
               <p className="position-kicker">
@@ -219,56 +279,6 @@ export const PlayPage = () => {
             </div>
           ) : null}
 
-          <div className="fen-bar">
-            <code>{chessPosition}</code>
-            <button type="button" onClick={copyFen}>{fenCopyMessage || "Copy FEN"}</button>
-          </div>
-
-          {gameState.status === "IN_PROGRESS" && gameState.availableDrawClaims.length > 0 && (
-            <div className="draw-claim">
-              <p>{gameState.availableDrawClaims.includes("REPETITION")
-                ? "A draw by repetition is available."
-                : "A draw under the 50-move rule is available."}</p>
-              <button onClick={handleDrawClaim} disabled={isClaimingDraw}>
-                {isClaimingDraw ? "Claiming…" : "Claim Draw"}
-              </button>
-            </div>
-          )}
-
-          {claimMessage && <p className="game-message">{claimMessage}</p>}
-          {gameState.status === "COMPLETED" && (
-            <div className="game-result"><p>{gameResultMessage(gameState)}</p></div>
-          )}
-
-          <div className="game-actions">
-            <button type="button" className="secondary-action" onClick={copyGameId}>Copy session ID</button>
-            <button type="button" className="primary-action" onClick={handleNewGame}>New position</button>
-          </div>
-
-
-          {feedbackUrl && (
-            <a
-              className="feedback-action"
-              href={feedbackUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Give Feedback ↗
-            </a>
-          )}
-
-          <div className="session-message" aria-live="polite">
-            <AnimatePresence>
-              {copyMessage && (
-                <motion.span
-                  className="session-info"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                >{copyMessage}</motion.span>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
       </section>
     </main>

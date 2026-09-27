@@ -6,3 +6,6 @@ stockfish
 Local
 .env
 *.env.local
+
+# Local learning notes.
+/frontend/Knight-Quest-Implementation.md

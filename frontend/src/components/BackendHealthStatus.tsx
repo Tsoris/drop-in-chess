@@ -3,7 +3,10 @@ import KnightMiniGame from "./KnightMiniGame";
 import { apiUrl } from "../lib/api";
 
 export default function BackendHealthStatus({ children, onContinue, showKnightQuest = false }: { children: ReactNode; onContinue?: () => void; showKnightQuest?: boolean }) {
-  const [continued, setContinued] = useState(false);
+  const [continued, setContinued] = useState(() => {
+    try { return sessionStorage.getItem("drop-in-chess-startup-dismissed") === "true"; }
+    catch { return false; }
+  });
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<"connecting" | "waiting" | "ready" | "error">("connecting");
   useEffect(() => {
@@ -46,7 +49,7 @@ export default function BackendHealthStatus({ children, onContinue, showKnightQu
       clearTimeout(requestTimer);
     };
   }, [attempt]);
-  const visible = showKnightQuest || status !== "ready" || !continued;
+  const visible = showKnightQuest || !continued;
   return (
     <>
     <section className="backend-startup" hidden={!visible}>
@@ -57,11 +60,14 @@ export default function BackendHealthStatus({ children, onContinue, showKnightQu
         {status === "error" && "The server hasn't responded yet. Please check your connection and try again."}
         {status === "ready" && "Server ready! You can return to Knight Quest from the main page."}
       </p>
-      {status === "ready" && <button className="startup-continue" onClick={() => { onContinue?.(); setContinued(true); }}>Continue to Drop in Chess</button>}
+      {status === "ready" && <button className="startup-continue" onClick={() => { try { sessionStorage.setItem("drop-in-chess-startup-dismissed", "true"); } catch { /* Storage is optional. */ } onContinue?.(); setContinued(true); }}>Continue to Drop in Chess</button>}
       <KnightMiniGame />
       {status === "error" && <button onClick={() => { setStatus("connecting"); setAttempt(value => value + 1); }}>Try again</button>}
     </section>
-    {!visible && children}
+    {!visible && (status === "ready" ? children : <section className="backend-startup">
+      <p role={status === "error" ? "alert" : "status"}>{status === "error" ? "Unable to reach the server. Please try again." : "Connecting to Drop in Chess..."}</p>
+      {status === "error" && <button onClick={() => { setStatus("connecting"); setAttempt(value => value + 1); }}>Try again</button>}
+    </section>)}
     </>
   );
 }

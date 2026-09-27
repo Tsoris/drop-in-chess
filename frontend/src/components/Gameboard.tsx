@@ -1,6 +1,6 @@
 import { apiUrl } from "../lib/api";
 import { Chess, type Square } from 'chess.js';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Chessboard, type SquareHandlerArgs } from 'react-chessboard';
 import type { GameState, MoveResponse } from '../types/GameStatus';
 
@@ -35,11 +35,36 @@ type MoveRequest = {
 function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPositionChange }: GameBoardProps) {
 
   const [currChessPosition, setCurrChessPosition] = useState(chessPosition);
+  const boardElement = useRef<HTMLDivElement>(null);
+  const feedbackAnimation = useRef<Animation | null>(null);
+  useEffect(() => () => feedbackAnimation.current?.cancel(), []);
+
+  function shakePiece(square: string) {
+    feedbackAnimation.current?.cancel();
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const element = boardElement.current?.querySelector(`[data-square="${square}"] [data-piece] svg`);
+    if (!element?.animate) return;
+    feedbackAnimation.current = element.animate(
+      [{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(-3px)' }, { transform: 'translateX(0)' }],
+      { duration: 260, easing: 'ease-in-out' },
+    );
+  }
+
   const [moveFrom, setMoveFrom] = useState('');
   const [optionSquares, setOptionSquares] = useState({});
-
   const chessGameRef = useRef(new Chess(chessPosition));
   const chessGame = chessGameRef.current;
+
+  // Keep the mounted board in sync with loaded games and server corrections.
+  // Acknowledgments matching the optimistic position must not restart animation.
+  useEffect(() => {
+    const board = chessGameRef.current;
+    if (board.fen() === chessPosition) return;
+    board.load(chessPosition);
+    setCurrChessPosition(chessPosition);
+    setMoveFrom('');
+    setOptionSquares({});
+  }, [chessPosition]);
 
   function getMoveOptions(square: Square) {
     const moves = chessGame.moves({
@@ -48,6 +73,7 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
     });
 
     if (moves.length === 0) {
+      if (chessGame.get(square)) shakePiece(square);
       setOptionSquares({});
       return false;
     }
@@ -67,6 +93,7 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
       background: 'rgba(255, 255, 0, 0.4)'
     };
 
+
     // set the option squares
     setOptionSquares(newSquares);
 
@@ -82,6 +109,17 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
 
     if (gameState.status !== "IN_PROGRESS") {
       return;
+    }
+    const clickedPiece = chessGame.get(square as Square);
+    if (clickedPiece && clickedPiece.color !== chessGame.turn()) {
+      const isCapture = moveFrom && chessGame.moves({ square: moveFrom as Square, verbose: true })
+        .some(move => move.to === square);
+      if (!isCapture) {
+        setMoveFrom('');
+        setOptionSquares({});
+        shakePiece(square);
+        return;
+      }
     }
     // piece clicked to move
     if (!moveFrom && piece) {
@@ -151,6 +189,7 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
       moveRequest.promotion = 'q';
     };
 
+    feedbackAnimation.current?.cancel();
     setCurrChessPosition(gameBoardFen);
     // clear moveFrom and optionSquares
     setMoveFrom('');
@@ -202,13 +241,14 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
 
   const chessboardOptions = {
     allowDragging: false,
+    animationDurationInMs: 300,
     onSquareClick,
     position: currChessPosition,
     squareStyles: { ...optionSquares, ...checkSquareStyles },
     id: 'click-to-move'
   };
 
-  return <Chessboard options={chessboardOptions} />;
+  return <div ref={boardElement}><Chessboard options={chessboardOptions} /></div>;
 }
 
 export default GameBoard;

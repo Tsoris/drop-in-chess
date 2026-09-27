@@ -180,3 +180,21 @@ test("claims a draw advertised by the backend", async () => {
   });
   expect(await screen.findByText("Draw by move rule.")).toBeInTheDocument();
 });
+
+test("keeps the board mounted when a move updates the position", async () => {
+  const user = userEvent.setup();
+  vi.spyOn(globalThis, "fetch").mockResolvedValue({
+    ok: true,
+    json: async () => ({ gameId: "game-123", status: "IN_PROGRESS", result: null,
+      endReason: null, availableDrawClaims: [],
+      fen: "8/8/8/8/8/4k3/8/4K3 w - - 0 1", ...positionDetails })
+  } as Response);
+  render(<MemoryRouter initialEntries={["/game/game-123"]}>
+    <Routes><Route path="/game/:gameId" element={<PlayPage />} /></Routes>
+  </MemoryRouter>);
+  await screen.findByText("ECO B76");
+  const board = screen.getByTestId("gameboard");
+  await user.click(screen.getByRole("button", { name: "Make mock move" }));
+  expect(screen.getByTestId("gameboard")).toBe(board);
+  expect(screen.getByText("Black to move")).toBeInTheDocument();
+});
