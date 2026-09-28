@@ -158,75 +158,76 @@ export const PlayPage = () => {
           <div className="hints-toggle-bar">
             <button type="button" aria-expanded={hintsVisible} aria-controls="position-hints" onClick={() => setHintsVisible(value => !value)}>{hintsVisible ? "Hide position info" : "Show position info"}</button>
           </div>
-        <div className="board-section">
-          <div className={`turn-indicator${sideToMove === "Black" ? " black-to-move" : ""}`}>
-            <span className="turn-dot" aria-hidden="true" />
-            <strong>{sideToMove} to move</strong>
-          </div>
-          <div className="board-stage">
-            <Gameboard
-              key={gameId}
-              gameId={gameId}
-              chessPosition={chessPosition}
-              gameState={gameState}
-              onGameStateChange={setGameState}
-              onPositionChange={setChessPosition}
-            />
-          </div>
-        </div>
-
-        <div className="board-controls">
-          <div className="fen-bar">
-            <code>{chessPosition}</code>
-            <button type="button" onClick={copyFen}>{fenCopyMessage || "Copy FEN"}</button>
-          </div>
-
-          {gameState.status === "IN_PROGRESS" && gameState.availableDrawClaims.length > 0 && (
-            <div className="draw-claim">
-              <p>{gameState.availableDrawClaims.includes("REPETITION")
-                ? "A draw by repetition is available."
-                : "A draw under the 50-move rule is available."}</p>
-              <button onClick={handleDrawClaim} disabled={isClaimingDraw}>
-                {isClaimingDraw ? "Claiming…" : "Claim Draw"}
-              </button>
+          <div className="board-section">
+            <div className={`turn-indicator${sideToMove === "Black" ? " black-to-move" : ""}`}>
+              <span className="turn-dot" aria-hidden="true" />
+              <strong>{sideToMove} to move</strong>
             </div>
-          )}
-
-          {claimMessage && <p className="game-message">{claimMessage}</p>}
-          {gameState.status === "COMPLETED" && (
-            <div className="game-result"><p>{gameResultMessage(gameState)}</p></div>
-          )}
-
-          <div className="game-actions">
-            <button type="button" className="secondary-action" onClick={copyGameId}>Copy session ID</button>
-            <button type="button" className="primary-action" onClick={handleNewGame}>New position</button>
+            <div className="board-stage">
+              <Gameboard
+                key={gameId}
+                gameId={gameId}
+                chessPosition={chessPosition}
+                gameState={gameState}
+                onGameStateChange={setGameState}
+                onPositionChange={setChessPosition}
+              />
+            </div>
           </div>
 
+          <div className="board-controls">
 
-          {feedbackUrl && (
-            <a
-              className="feedback-action"
-              href={feedbackUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Give Feedback ↗
-            </a>
-          )}
+            {gameState.status === "IN_PROGRESS" && gameState.availableDrawClaims.length > 0 && (
+              <div className="draw-claim">
+                <p>{gameState.availableDrawClaims.includes("REPETITION")
+                  ? "A draw by repetition is available."
+                  : "A draw under the 50-move rule is available."}</p>
+                <button onClick={handleDrawClaim} disabled={isClaimingDraw}>
+                  {isClaimingDraw ? "Claiming…" : "Claim Draw"}
+                </button>
+              </div>
+            )}
 
-          <div className="session-message" aria-live="polite">
-            <AnimatePresence>
-              {copyMessage && (
-                <motion.span
-                  className="session-info"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                >{copyMessage}</motion.span>
-              )}
-            </AnimatePresence>
+            {claimMessage && <p className="game-message">{claimMessage}</p>}
+            {gameState.status === "COMPLETED" && (
+              <div className="game-result"><p>{gameResultMessage(gameState)}</p></div>
+            )}
+
+            <div className="game-actions">
+              <button type="button" className="secondary-action" onClick={copyGameId}>Copy session ID</button>
+              <button type="button" className="primary-action" onClick={handleNewGame}>New position</button>
+            </div>
+
+            <div className="fen-bar">
+              <code>{chessPosition}</code>
+              <button type="button" onClick={copyFen}>{fenCopyMessage || "Copy FEN"}</button>
+            </div>
+
+
+            {feedbackUrl && (
+              <a
+                className="feedback-action"
+                href={feedbackUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Give Feedback ↗
+              </a>
+            )}
+
+            <div className="session-message" aria-live="polite">
+              <AnimatePresence>
+                {copyMessage && (
+                  <motion.span
+                    className="session-info"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                  >{copyMessage}</motion.span>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
         </div>
 
         <div id="position-hints" className="position-console" role="region" aria-label="Position information and hints" tabIndex={0} hidden={!hintsVisible}>
@@ -243,7 +244,7 @@ export const PlayPage = () => {
           {positionDetails?.source && (
             <div className="provenance-card">
               <div>
-                                <div className="provenance-label-row">
+                <div className="provenance-label-row">
                   <span className="provenance-label">Position provenance</span>
                   <span className="eco-help">
                     <button type="button" className="eco-help-button" aria-label="What does ECO mean?"
@@ -265,10 +266,10 @@ export const PlayPage = () => {
                 <span>{positionDetails.source.variation || positionDetails.source.opening}</span>
               </div>
               <div className="source-game-link">
-              <a href={positionDetails.source.gameUrl} target="_blank" rel="noreferrer">
-                View source game ↗
-              </a>
-              {sourceMoveLabel && <span>{sourceMoveLabel}</span>}
+                <a href={positionDetails.source.gameUrl} target="_blank" rel="noreferrer">
+                  View source game ↗
+                </a>
+                {sourceMoveLabel && <span>{sourceMoveLabel}</span>}
               </div>
             </div>
           )}
