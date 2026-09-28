@@ -552,6 +552,10 @@ Potential testing layers:
 
 Verified with 37 passing backend tests, including all 1,000 published positions and both position-selection HTTP endpoints.
 
+------------------------------------------------------------------------
+
+## Stretch + Future Versions
+
 ### Milestone 4 --- Multiplayer
 
 -   [x] Create game sessions

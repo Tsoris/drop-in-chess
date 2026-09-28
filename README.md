@@ -1,8 +1,8 @@
 # Drop in Chess
 
-A multiplayer chess platform that drops players into balanced, interesting
+A chess platform that drops players into balanced, interesting
 middlegame and endgame positions, skipping the opening and getting straight
-to the action.
+to the action. Many positions contain thoughtful insight into the current position.
 
 ## Project Documentation
 
@@ -42,6 +42,13 @@ If you're reviewing the project:
 - Spring Boot
 - Maven
 
+### Additional tools
+
+- OpenAI API
+- StockFish
+
 ## Status
 
-Early development.
+[V1 Live - Supports Local Play](https://drop-in-chess.vercel.app/)
+
+Current uses free hosting, backend may take a minute to spin up
