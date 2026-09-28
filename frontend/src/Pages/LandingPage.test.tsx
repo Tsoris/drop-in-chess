@@ -54,7 +54,7 @@ test("creates a new game when stored session is stale", async () => {
     );
 
     await user.click(
-        screen.getByRole("button", { name: /play now/i })
+        screen.getByRole("button", { name: /play locally/i })
     );
 
     await waitFor(() => {

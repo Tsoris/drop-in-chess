@@ -6,7 +6,7 @@ import GameBoard from './Gameboard';
 vi.mock('react-chessboard', () => ({
   Chessboard: ({ options }: { options: { position: string; squareStyles: Record<string, object>; onSquareClick: (args: unknown) => void } }) => {
     const game = new Chess(options.position);
-    return <>{['e2', 'e4', 'd5', 'e7', 'a1', 'e1', 'd2'].map(square => {
+    return <>{['e2', 'e4', 'd5', 'e7', 'a1', 'e1', 'd2', 'a7', 'a8', 'b8', 'b2', 'b1'].map(square => {
       const piece = game.get(square as 'e2');
       return <button key={square} data-square={square} data-highlighted={Boolean(options.squareStyles[square])} aria-label={square}
         onClick={() => options.onSquareClick({ square, piece: piece ? { pieceType: piece.color + piece.type.toUpperCase() } : null })}>
@@ -90,5 +90,61 @@ test('shakes a blocked own piece even when the king is not in check', () => {
     fireEvent.click(screen.getByRole('button', { name: 'a1' }));
     expect(animate).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'a1' })).toHaveAttribute('data-highlighted', 'false');
+  } finally { restore(); }
+});
+function mockPromotionDialog() {
+  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute('open', ''); } });
+  Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value: function (this: HTMLDialogElement) { this.removeAttribute('open'); } });
+}
+
+for (const scenario of [
+  { label: 'white', fen: '7k/P7/8/8/8/8/8/7K w - - 0 1', from: 'a7', to: 'a8' },
+  { label: 'black', fen: '7k/8/8/8/8/8/1p6/7K b - - 0 1', from: 'b2', to: 'b1' },
+  { label: 'capture', fen: '1r5k/P7/8/8/8/8/8/7K w - - 0 1', from: 'a7', to: 'b8' },
+]) {
+  test.each([['Queen', 'q'], ['Rook', 'r'], ['Bishop', 'b'], ['Knight', 'n']])(`${scenario.label} promotion to %s submits the selected piece and matching FEN`, (name, piece) => {
+    mockPromotionDialog();
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
+    const { restore } = setup(false, scenario.fen);
+    try {
+      fireEvent.click(screen.getByRole('button', { name: scenario.from }));
+      fireEvent.click(screen.getByRole('button', { name: scenario.to }));
+      expect(screen.getByRole('dialog', { name: 'Promote your pawn' })).toBeInTheDocument();
+      expect(fetchMock).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name }));
+      const expected = new Chess(scenario.fen);
+      expected.move({ from: scenario.from, to: scenario.to, promotion: piece });
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(JSON.parse(fetchMock.mock.calls[0][1]!.body as string)).toEqual({
+        from: scenario.from.toUpperCase(), to: scenario.to.toUpperCase(), promotion: piece, checkFen: expected.fen(),
+      });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    } finally { restore(); }
+  });
+}
+
+test('cancelling promotion leaves the pawn unmoved and sends no request', () => {
+  mockPromotionDialog();
+  const fetchMock = vi.spyOn(globalThis, 'fetch');
+  const { restore } = setup(false, '7k/P7/8/8/8/8/8/7K w - - 0 1');
+  try {
+    fireEvent.click(screen.getByRole('button', { name: 'a7' }));
+    fireEvent.click(screen.getByRole('button', { name: 'a8' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'a7' }).querySelector('[data-piece="p"]')).not.toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  } finally { restore(); }
+});
+test('clicking outside the promotion panel cancels without submitting', () => {
+  mockPromotionDialog();
+  const fetchMock = vi.spyOn(globalThis, 'fetch');
+  const { restore } = setup(false, '7k/P7/8/8/8/8/8/7K w - - 0 1');
+  try {
+    fireEvent.click(screen.getByRole('button', { name: 'a7' }));
+    fireEvent.click(screen.getByRole('button', { name: 'a8' }));
+    fireEvent.click(screen.getByRole('dialog'), { clientX: -10, clientY: -10 });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   } finally { restore(); }
 });

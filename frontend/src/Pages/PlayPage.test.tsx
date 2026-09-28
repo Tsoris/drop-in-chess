@@ -23,6 +23,7 @@ const positionDetails = {
   phase: "MIDDLEGAME",
   source: {
     gameUrl: "https://lichess.org/example",
+    ply: 33,
     eco: "B76",
     opening: "Sicilian Defense: Dragon Variation",
     variation: null
@@ -197,4 +198,5 @@ test("keeps the board mounted when a move updates the position", async () => {
   await user.click(screen.getByRole("button", { name: "Make mock move" }));
   expect(screen.getByTestId("gameboard")).toBe(board);
   expect(screen.getByText("Black to move")).toBeInTheDocument();
+  expect(screen.getByText("Starting Position: White's move 17")).toBeInTheDocument();
 });

@@ -104,7 +104,7 @@ export const LandingPage = ({ onPlayKnightQuest }: { onPlayKnightQuest?: () => v
                     <p className="landing-eyebrow"><span /> STRAIGHT TO THE POSITION </p>
                     <h2>Skip the opening.<br /><em>Find your next move.</em></h2>
                     <p className="landing-lead">Drop into a position from a real game. Explore the possibilities, follow your instincts, and play it through.</p>
-                    <button className="landing-primary" onClick={handlePlayNow}>Play Now <span aria-hidden="true">&#8599;</span></button>
+                    <button className="landing-primary" onClick={handlePlayNow}>Play Locally <span aria-hidden="true">&#8599;</span></button>
                     <p className="landing-note">Curated positions. Both sides in your hands.</p>
                 </div>
                 <div className="landing-art" aria-hidden="true">

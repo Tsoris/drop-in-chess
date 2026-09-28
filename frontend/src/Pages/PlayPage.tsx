@@ -50,6 +50,7 @@ function stateFromResponse(data: GameResponse): GameState {
 export const PlayPage = () => {
   const navigate = useNavigate();
   const [hintsVisible, setHintsVisible] = useState(true);
+  const [ecoHelpOpen, setEcoHelpOpen] = useState(false);
   const { gameId } = useParams();
   const [chessPosition, setChessPosition] = useState(
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -134,6 +135,10 @@ export const PlayPage = () => {
       .catch(error => console.error("Unable to fetch game:", error));
   }, [gameId]);
 
+  const sourcePly = positionDetails?.source?.ply;
+  const sourceMoveLabel = typeof sourcePly === 'number' && Number.isInteger(sourcePly) && sourcePly > 0
+    ? `Starting Position: ${sourcePly % 2 === 1 ? "White's" : "Black's"} move ${Math.ceil(sourcePly / 2)}`
+    : null;
   const context = positionDetails?.context;
   const descriptionsAvailable = context?.availability === "AVAILABLE";
   const positionTitle = positionDetails?.source?.opening
@@ -157,7 +162,6 @@ export const PlayPage = () => {
           <div className={`turn-indicator${sideToMove === "Black" ? " black-to-move" : ""}`}>
             <span className="turn-dot" aria-hidden="true" />
             <strong>{sideToMove} to move</strong>
-            {positionDetails && <span>{positionDetails.phase === "MIDDLEGAME" ? "Middlegame" : "Endgame"}</span>}
           </div>
           <div className="board-stage">
             <Gameboard
@@ -239,13 +243,33 @@ export const PlayPage = () => {
           {positionDetails?.source && (
             <div className="provenance-card">
               <div>
-                <span className="provenance-label">Position provenance</span>
+                                <div className="provenance-label-row">
+                  <span className="provenance-label">Position provenance</span>
+                  <span className="eco-help">
+                    <button type="button" className="eco-help-button" aria-label="What does ECO mean?"
+                      aria-expanded={ecoHelpOpen} aria-describedby={ecoHelpOpen ? 'eco-tooltip' : undefined}
+                      onMouseEnter={() => setEcoHelpOpen(true)} onMouseLeave={() => setEcoHelpOpen(false)}
+                      onFocus={() => setEcoHelpOpen(true)} onBlur={() => setEcoHelpOpen(false)}
+                      onClick={() => setEcoHelpOpen(true)}
+                      onKeyDown={event => { if (event.key === 'Escape') setEcoHelpOpen(false); }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 11v6" strokeLinecap="round" />
+                        <circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" />
+                      </svg>
+                    </button>
+                    {ecoHelpOpen && <span id="eco-tooltip" role="tooltip" className="eco-tooltip">ECO stands for Encyclopedia of Chess Openings. Codes from A00 to E99 classify chess openings. This code identifies the opening played in the source game.</span>}
+                  </span>
+                </div>
                 <strong>ECO {positionDetails.source.eco}</strong>
                 <span>{positionDetails.source.variation || positionDetails.source.opening}</span>
               </div>
+              <div className="source-game-link">
               <a href={positionDetails.source.gameUrl} target="_blank" rel="noreferrer">
                 View source game ↗
               </a>
+              {sourceMoveLabel && <span>{sourceMoveLabel}</span>}
+              </div>
             </div>
           )}
 

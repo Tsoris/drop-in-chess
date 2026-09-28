@@ -1,3 +1,4 @@
+import PromotionPicker, { type PromotionPiece } from "./PromotionPicker";
 import { apiUrl } from "../lib/api";
 import { Chess, type Square } from 'chess.js';
 import { useEffect, useRef, useState } from 'react';
@@ -51,6 +52,8 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
   }
 
   const [moveFrom, setMoveFrom] = useState('');
+  const [promotion, setPromotion] = useState<{ from: string; to: string; color: 'w' | 'b' } | null>(null);
+  const requestPending = useRef(false);
   const [optionSquares, setOptionSquares] = useState({});
   const chessGameRef = useRef(new Chess(chessPosition));
   const chessGame = chessGameRef.current;
@@ -61,6 +64,7 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
     const board = chessGameRef.current;
     if (board.fen() === chessPosition) return;
     board.load(chessPosition);
+    setPromotion(null);
     setCurrChessPosition(chessPosition);
     setMoveFrom('');
     setOptionSquares({});
@@ -107,7 +111,7 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
     piece
   }: SquareHandlerArgs) {
 
-    if (gameState.status !== "IN_PROGRESS") {
+    if (gameState.status !== "IN_PROGRESS" || promotion || requestPending.current) {
       return;
     }
     const clickedPiece = chessGame.get(square as Square);
@@ -154,29 +158,24 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
       return;
     }
 
-    // is normal move
-    try {
-      chessGame.move({
-        from: moveFrom,
-        to: square,
-        promotion: 'q'
-      });
-    } catch {
-      // if invalid, setMoveFrom and getMoveOptions
-      const hasMoveOptions = getMoveOptions(square as Square);
-
-      // if new piece, setMoveFrom, otherwise clear moveFrom
-      if (hasMoveOptions) {
-        setMoveFrom(square);
-      }
-
-      // return early
+    if (foundMove.promotion) {
+      setPromotion({ from: moveFrom, to: square, color: chessGame.turn() });
       return;
     }
+    await submitMove(moveFrom, square);
+  }
 
-    // update the position state
-    const fromSquare = moveFrom;
-    const destinationSquare = square;
+  async function submitMove(fromSquare: string, destinationSquare: string, selectedPromotion?: PromotionPiece) {
+    if (requestPending.current || gameState.status !== 'IN_PROGRESS') return;
+    const beforeMove = chessGame.fen();
+    try {
+      chessGame.move({ from: fromSquare, to: destinationSquare, ...(selectedPromotion ? { promotion: selectedPromotion } : {}) });
+    } catch {
+      setPromotion(null);
+      return;
+    }
+    requestPending.current = true;
+    setPromotion(null);
     const gameBoardFen = chessGame.fen();
 
     const moveRequest: MoveRequest = {
@@ -185,9 +184,7 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
       checkFen: gameBoardFen
     };
 
-    if (foundMove.promotion) {
-      moveRequest.promotion = 'q';
-    };
+    if (selectedPromotion) moveRequest.promotion = selectedPromotion;
 
     feedbackAnimation.current?.cancel();
     setCurrChessPosition(gameBoardFen);
@@ -226,6 +223,10 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
       });
     } catch (error) {
       console.error("Failed to connect to server: ", error);
+      chessGame.load(beforeMove);
+      setCurrChessPosition(beforeMove);
+    } finally {
+      requestPending.current = false;
     }
   }
 
@@ -248,7 +249,12 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
     id: 'click-to-move'
   };
 
-  return <div ref={boardElement}><Chessboard options={chessboardOptions} /></div>;
+  return <div ref={boardElement}>
+    <Chessboard options={chessboardOptions} />
+    {promotion && gameState.status === 'IN_PROGRESS' && <PromotionPicker color={promotion.color}
+      onChoose={piece => { void submitMove(promotion.from, promotion.to, piece); }}
+      onCancel={() => { setPromotion(null); setMoveFrom(''); setOptionSquares({}); }} />}
+  </div>;
 }
 
 export default GameBoard;

@@ -25,6 +25,7 @@ function Header() {
 
     return (
         <header className="site-header">
+            <h1 className="site-title"><Link to="/" aria-label="Drop in Chess home"><span className="header-mark" aria-hidden="true">&#9822;</span><span>Drop in Chess</span></Link></h1>
             <div className="theme-controls">
                 <button className="theme-toggle" type="button" onClick={toggleTheme}
                     aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}>
@@ -36,7 +37,7 @@ function Header() {
                     </svg>
                 </button>
             </div>
-            <h1 className="site-title"><Link to="/">Drop in Chess</Link></h1>
+
         </header>
     );
 }

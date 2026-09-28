@@ -43,6 +43,7 @@ export type GameResponse = GameState & {
   context: PositionContext;
   source?: {
     gameUrl: string;
+    ply?: number | null;
     eco: string;
     opening: string;
     variation: string | null;
