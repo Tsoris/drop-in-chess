@@ -5,16 +5,24 @@ import { afterEach, expect, test, vi } from "vitest";
 import PlayPage from "./PlayPage";
 
 vi.mock("../components/Gameboard", () => ({
-  default: ({ onPositionChange }: { onPositionChange: (fen: string) => void }) => (
+  default: ({
+    onPositionChange,
+    onSessionNotFound
+  }: {
+    onPositionChange: (fen: string) => void;
+    onSessionNotFound: () => void;
+  }) => (
     <div>
       <div data-testid="gameboard" />
       <button onClick={() => onPositionChange("8/8/8/8/8/4k3/8/4K3 b - - 1 1")}>Make mock move</button>
+      <button onClick={onSessionNotFound}>Report missing session</button>
     </div>
   )
 }));
 
 afterEach(() => {
   cleanup();
+  sessionStorage.clear();
   vi.restoreAllMocks();
 });
 
@@ -199,4 +207,87 @@ test("keeps the board mounted when a move updates the position", async () => {
   expect(screen.getByTestId("gameboard")).toBe(board);
   expect(screen.getByText("Black to move")).toBeInTheDocument();
   expect(screen.getByText("Starting Position: White's move 17")).toBeInTheDocument();
+});
+test("keeps the play page visible for a missing game and starts a replacement position", async () => {
+  const user = userEvent.setup();
+  sessionStorage.setItem("gameId", "missing-game");
+  const fetchMock = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+    .mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      json: async () => ({ gameId: "replacement-game" })
+    } as Response)
+    .mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        gameId: "replacement-game",
+        status: "IN_PROGRESS",
+        result: null,
+        endReason: null,
+        availableDrawClaims: [],
+        fen: "8/8/8/8/8/4k3/8/4K3 w - - 0 1",
+        ...positionDetails
+      })
+    } as Response);
+
+  render(
+    <MemoryRouter initialEntries={["/game/missing-game"]}>
+      <Routes>
+        <Route path="/" element={<div>Home page</div>} />
+        <Route path="/game/:gameId" element={<PlayPage />} />
+      </Routes>
+    </MemoryRouter>
+  );
+
+  const missingSessionAlerts = await screen.findAllByRole("alert");
+  expect(missingSessionAlerts).toHaveLength(2);
+  for (const alert of missingSessionAlerts) {
+    expect(alert).toHaveTextContent("Game not found");
+    expect(alert).toHaveTextContent("Click New position to start another game.");
+  }
+  expect(screen.queryByText("Curated middlegame position")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /position info/i })).not.toBeInTheDocument();
+  expect(screen.getByTestId("gameboard")).toBeInTheDocument();
+  expect(sessionStorage.getItem("gameId")).toBeNull();
+
+  await user.click(screen.getByRole("button", { name: "New position" }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+    "http://localhost:8080/games",
+    { method: "POST" }
+  ));
+  expect(sessionStorage.getItem("gameId")).toBe("replacement-game");
+  expect(await screen.findByTestId("gameboard")).toBeInTheDocument();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test("shows the same missing-session message if an active board reports that its session disappeared", async () => {
+  const user = userEvent.setup();
+  sessionStorage.setItem("gameId", "game-123");
+  vi.spyOn(globalThis, "fetch").mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      gameId: "game-123",
+      status: "IN_PROGRESS",
+      result: null,
+      endReason: null,
+      availableDrawClaims: [],
+      fen: "8/8/8/8/8/4k3/8/4K3 w - - 0 1",
+      ...positionDetails
+    })
+  } as Response);
+
+  render(
+    <MemoryRouter initialEntries={["/game/game-123"]}>
+      <Routes><Route path="/game/:gameId" element={<PlayPage />} /></Routes>
+    </MemoryRouter>
+  );
+
+  await screen.findByText("ECO B76");
+  await user.click(screen.getByRole("button", { name: "Report missing session" }));
+  expect(screen.getAllByRole("alert")).toHaveLength(2);
+  expect(screen.getAllByRole("alert")[0]).toHaveTextContent("Click New position to start another game.");
+  expect(sessionStorage.getItem("gameId")).toBeNull();
 });

@@ -53,3 +53,45 @@ test("unmount cancels requests and retry timers", async () => {
   expect(signal?.aborted).toBe(true);
   expect(mock).toHaveBeenCalledTimes(1);
 });
+
+test("shows Knight Quest when a dismissed startup check keeps failing", async () => {
+  vi.useFakeTimers();
+  sessionStorage.setItem("drop-in-chess-startup-dismissed", "true");
+  vi.spyOn(globalThis, "fetch").mockImplementation(() => new Promise(() => {}));
+
+  render(<BackendHealthStatus>Game ready</BackendHealthStatus>);
+
+  expect(screen.getByText("Connecting to Drop in Chess...")).toBeInTheDocument();
+  expect(screen.queryByRole("group", { name: "Knight mini-game board" })).not.toBeInTheDocument();
+
+  await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+
+  expect(screen.getByText("Waiting for the Drop in Chess server...")).toBeInTheDocument();
+  expect(screen.getByRole("group", { name: "Knight mini-game board" })).toBeInTheDocument();
+});
+
+test("detects a later disconnect and waits for Continue after recovery", async () => {
+  vi.useFakeTimers();
+  sessionStorage.setItem("drop-in-chess-startup-dismissed", "true");
+  vi.spyOn(globalThis, "fetch")
+    .mockImplementationOnce(ready)
+    .mockRejectedValueOnce(new Error("offline"))
+    .mockImplementation(ready);
+
+  render(<BackendHealthStatus>Game ready</BackendHealthStatus>);
+  await act(async () => {});
+  expect(screen.getByText("Game ready")).toBeInTheDocument();
+
+  await act(async () => { await vi.advanceTimersByTimeAsync(10000); });
+  expect(screen.getByText("Waiting for the Drop in Chess server...")).toBeInTheDocument();
+  expect(screen.getByRole("group", { name: "Knight mini-game board" })).toBeInTheDocument();
+
+  await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+  expect(screen.queryByText("Game ready")).not.toBeInTheDocument();
+  expect(screen.getByText("Server ready. Continue when you're ready.")).toBeInTheDocument();
+  expect(screen.getByRole("group", { name: "Knight mini-game board" })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Continue to Drop in Chess" }));
+  expect(screen.getByText("Game ready")).toBeInTheDocument();
+  expect(screen.queryByRole("group", { name: "Knight mini-game board" })).not.toBeInTheDocument();
+});

@@ -657,3 +657,33 @@
 .promotion-choices button { border-color: transparent; padding: .4rem .15rem .55rem; border-radius: 12px; }
 .promotion-choices span { font-size: 2.2rem; }
 .promotion-picker .promotion-cancel { border: 0; background: transparent; color: var(--play-muted); padding: .4rem .8rem; }
+.missing-session-heading { width: 100%; }
+.missing-session-message {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: .8rem 1rem;
+  border: 1px solid rgba(239, 142, 134, .45);
+  border-radius: 10px;
+  background: rgba(120, 60, 60, .16);
+  color: #ef8e86;
+  font-size: .9rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.missing-session-message strong { display: block; }
+.missing-session-message span { display: block; margin-top: .25rem; font-weight: 400; }
+:root:not([data-theme="dark"]) .missing-session-message {
+  border-color: rgba(169, 61, 53, .3);
+  background: rgba(169, 61, 53, .08);
+  color: #a93d35;
+}
+.missing-session-mobile { display: none; }
+@media (max-width: 959px) {
+  .missing-session-mobile {
+    display: block;
+    width: calc(100% - 2rem);
+    margin: .75rem 1rem;
+  }
+  .missing-session-desktop { display: none; }
+}

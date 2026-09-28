@@ -24,6 +24,7 @@ type GameBoardProps = {
   gameState: GameState;
   onGameStateChange: (state: GameState) => void;
   onPositionChange: (fen: string) => void;
+  onSessionNotFound: () => void;
 };
 
 type MoveRequest = {
@@ -33,7 +34,7 @@ type MoveRequest = {
   checkFen: string;
 };
 
-function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPositionChange }: GameBoardProps) {
+function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPositionChange, onSessionNotFound }: GameBoardProps) {
 
   const [currChessPosition, setCurrChessPosition] = useState(chessPosition);
   const boardElement = useRef<HTMLDivElement>(null);
@@ -200,6 +201,11 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
         },
         body: JSON.stringify(moveRequest)
       });
+
+      if (response.status === 404) {
+        onSessionNotFound();
+        return;
+      }
 
       const data: MoveResponse = await response.json();
 

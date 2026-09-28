@@ -1,6 +1,9 @@
 package com.dropinchess.controller;
 
 import com.dropinchess.DataTransferObject.GameResponse;
+import com.dropinchess.DataTransferObject.MoveRequest;
+import com.dropinchess.DataTransferObject.MoveResponse;
+import com.github.bhlangonijr.chesslib.Square;
 import com.dropinchess.model.Game;
 import com.dropinchess.model.GameEndReason;
 import com.dropinchess.model.GameResult;
@@ -57,6 +60,18 @@ class GameControllerTest {
     @Test
     void returnsNotFoundForUnknownGame() {
         ResponseEntity<GameResponse> response = gameController.claimDraw(UUID.randomUUID());
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNull(response.getBody());
+    }
+
+    @Test
+    void returnsNotFoundWhenMovingInUnknownGame() {
+        ResponseEntity<MoveResponse> response = gameController.makeMove(
+                UUID.randomUUID(),
+                new MoveRequest(Square.E2, Square.E4, null,
+                        "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1")
+        );
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());

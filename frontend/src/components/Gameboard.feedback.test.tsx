@@ -18,7 +18,7 @@ vi.mock('react-chessboard', () => ({
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-function setup(reduced = false, fen = new Chess().fen()) {
+function setup(reduced = false, fen = new Chess().fen(), onSessionNotFound = () => {}) {
   const animate = vi.fn(() => ({ cancel: vi.fn() }));
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: reduced })));
   vi.stubGlobal('Animation', class {});
@@ -26,7 +26,7 @@ function setup(reduced = false, fen = new Chess().fen()) {
   Object.defineProperty(Element.prototype, 'animate', { configurable: true, value: animate });
   render(<GameBoard gameId="test" chessPosition={fen}
     gameState={{ status: 'IN_PROGRESS', result: null, endReason: null, availableDrawClaims: [] }}
-    onPositionChange={() => {}} onGameStateChange={() => {}} />);
+    onPositionChange={() => {}} onGameStateChange={() => {}} onSessionNotFound={onSessionNotFound} />);
   return { animate, restore: () => Object.defineProperty(Element.prototype, 'animate', { configurable: true, value: original }) };
 }
 
@@ -146,5 +146,15 @@ test('clicking outside the promotion panel cancels without submitting', () => {
     fireEvent.click(screen.getByRole('dialog'), { clientX: -10, clientY: -10 });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+  } finally { restore(); }
+});
+test('reports a missing session when a move returns 404', async () => {
+  const onSessionNotFound = vi.fn();
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ status: 404, ok: false } as Response);
+  const { restore } = setup(false, new Chess().fen(), onSessionNotFound);
+  try {
+    fireEvent.click(screen.getByRole('button', { name: 'e2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'e4' }));
+    await vi.waitFor(() => expect(onSessionNotFound).toHaveBeenCalledOnce());
   } finally { restore(); }
 });

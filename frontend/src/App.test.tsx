@@ -8,19 +8,25 @@ import Header from './components/Header';
 vi.mock('./Pages/PlayPage', () => ({ default: () => <div>Play page</div> }));
 afterEach(() => { cleanup(); sessionStorage.clear(); vi.restoreAllMocks(); });
 
-test('Continue appears above the board and returns a game URL to the main page; replay returns home', async () => {
+test('Continue appears above the board and preserves a refreshed game URL', async () => {
   vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ status: 'CONNECTED' }) } as Response);
   render(<MemoryRouter initialEntries={['/game/example']}><Header /><GameRoutes /></MemoryRouter>);
   const proceed = await screen.findByRole('button', { name: 'Continue to Drop in Chess' });
   const board = screen.getByRole('group', { name: 'Knight mini-game board' });
   expect(proceed.compareDocumentPosition(board) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   fireEvent.click(proceed);
-  expect(screen.getByRole('region', { name: 'Welcome to Drop in Chess' })).toBeInTheDocument();
-  expect(screen.queryByText('Play page')).not.toBeInTheDocument();
+  expect(screen.getByText('Play page')).toBeInTheDocument();
+  expect(screen.queryByRole('region', { name: 'Welcome to Drop in Chess' })).not.toBeInTheDocument();
+});
+
+test('Knight Quest opened from the landing page returns to the landing page', async () => {
+  sessionStorage.setItem('drop-in-chess-startup-dismissed', 'true');
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ status: 'CONNECTED' }) } as Response);
+  render(<MemoryRouter initialEntries={['/']}><GameRoutes /></MemoryRouter>);
+  expect(await screen.findByRole('region', { name: 'Welcome to Drop in Chess' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Play Here' }));
   expect(screen.getByRole('group', { name: 'Knight mini-game board' })).toBeInTheDocument();
-  expect(screen.getByText('Server ready! You can return to Knight Quest from the main page.')).toBeVisible();
-  expect(screen.getByRole('group', { name: 'Knight mini-game board' })).toBe(board);
+  expect(screen.getByText("Server ready. Continue when you're ready.")).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Continue to Drop in Chess' }));
   expect(screen.getByRole('region', { name: 'Welcome to Drop in Chess' })).toBeInTheDocument();
 });

@@ -61,6 +61,7 @@ export const PlayPage = () => {
   const [isClaimingDraw, setIsClaimingDraw] = useState(false);
   const [copyMessage, setCopyMessage] = useState("");
   const [fenCopyMessage, setFenCopyMessage] = useState("");
+  const [sessionNotFound, setSessionNotFound] = useState(false);
 
   const sideToMove = chessPosition.split(" ")[1] === "b" ? "Black" : "White";
 
@@ -80,12 +81,18 @@ export const PlayPage = () => {
     showTemporaryMessage(setFenCopyMessage, "FEN copied");
   }
 
+  function handleSessionNotFound() {
+    sessionStorage.removeItem("gameId");
+    setSessionNotFound(true);
+  }
+
   async function handleNewGame() {
     try {
       const response = await fetch(apiUrl("/games"), { method: "POST" });
       if (!response.ok) throw new Error(`Failed to create game: ${response.status}`);
       const data: GameResponse = await response.json();
       sessionStorage.setItem("gameId", data.gameId);
+      setSessionNotFound(false);
       navigate(`/game/${data.gameId}`);
     } catch (error) {
       console.error("Unable to create game:", error);
@@ -98,6 +105,10 @@ export const PlayPage = () => {
     setClaimMessage("");
     try {
       const response = await fetch(apiUrl(`/games/${gameId}/draw-claim`), { method: "POST" });
+      if (response.status === 404) {
+        handleSessionNotFound();
+        return;
+      }
       const data: GameResponse = await response.json();
       setChessPosition(data.fen);
       setGameState(stateFromResponse(data));
@@ -118,10 +129,15 @@ export const PlayPage = () => {
     if (!gameId) return;
     fetch(apiUrl(`/games/${gameId}`))
       .then(response => {
+        if (response.status === 404) {
+          handleSessionNotFound();
+          return null;
+        }
         if (!response.ok) throw new Error(`Failed to load game: ${response.status}`);
         return response.json() as Promise<GameResponse>;
       })
       .then(data => {
+        if (!data) return;
         setChessPosition(data.fen);
         setGameState(stateFromResponse(data));
         setPositionDetails({
@@ -150,14 +166,22 @@ export const PlayPage = () => {
     ? `https://docs.google.com/forms/d/e/1FAIpQLSdes_bgBxmxcdWKF11fRZcgv8mUp3o4s2UEBVkRXWQgyfVdRw/viewform?usp=pp_url&entry.976582976=${encodeURIComponent(positionDetails.positionId)}`
     : null;
 
+
   return (
     <main className="play-page">
       <p className="position-info-intro"><span className="position-info-desktop">Select Show position info to explore ideas and plans for this position, or open the original game to see how it was played.</span><span className="position-info-mobile">Explore ideas and plans below the board, or open the original game to see how it was played.</span></p>
       <section className={`play-workspace${hintsVisible ? "" : " hints-collapsed"}`} aria-label="Chess position workspace">
         <div className="board-column">
-          <div className="hints-toggle-bar">
-            <button type="button" aria-expanded={hintsVisible} aria-controls="position-hints" onClick={() => setHintsVisible(value => !value)}>{hintsVisible ? "Hide position info" : "Show position info"}</button>
-          </div>
+          {!sessionNotFound && (
+            <div className="hints-toggle-bar">
+              <button type="button" aria-expanded={hintsVisible} aria-controls="position-hints" onClick={() => setHintsVisible(value => !value)}>{hintsVisible ? "Hide position info" : "Show position info"}</button>
+            </div>
+          )}
+          {sessionNotFound && (
+            <p className="missing-session-message missing-session-mobile" role="alert">
+              <strong>Game not found</strong><span>Click New position to start another game.</span>
+            </p>
+          )}
           <div className="board-section">
             <div className={`turn-indicator${sideToMove === "Black" ? " black-to-move" : ""}`}>
               <span className="turn-dot" aria-hidden="true" />
@@ -171,11 +195,13 @@ export const PlayPage = () => {
                 gameState={gameState}
                 onGameStateChange={setGameState}
                 onPositionChange={setChessPosition}
+                onSessionNotFound={handleSessionNotFound}
               />
             </div>
           </div>
 
           <div className="board-controls">
+
 
             {gameState.status === "IN_PROGRESS" && gameState.availableDrawClaims.length > 0 && (
               <div className="draw-claim">
@@ -232,11 +258,17 @@ export const PlayPage = () => {
 
         <div id="position-hints" className="position-console" role="region" aria-label="Position information and hints" tabIndex={0} hidden={!hintsVisible}>
           <div className="position-heading">
-            <div>
-              <p className="position-kicker">
-                {positionDetails?.phase === "ENDGAME" ? "Curated endgame position" : "Curated middlegame position"}
-              </p>
-              <h2>{positionTitle}</h2>
+            <div className={sessionNotFound ? "missing-session-heading" : undefined}>
+              {sessionNotFound ? (
+                <p className="missing-session-message missing-session-desktop" role="alert"><strong>Game not found</strong><span>Click New position to start another game.</span></p>
+              ) : (
+                <>
+                  <p className="position-kicker">
+                    {positionDetails?.phase === "ENDGAME" ? "Curated endgame position" : "Curated middlegame position"}
+                  </p>
+                  <h2>{positionTitle}</h2>
+                </>
+              )}
             </div>
             {descriptionsAvailable && <span className="verified-badge">✓ Feedback Verified</span>}
           </div>

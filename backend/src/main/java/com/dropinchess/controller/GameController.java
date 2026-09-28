@@ -82,6 +82,10 @@ public class GameController {
     public ResponseEntity<MoveResponse> makeMove(
             @PathVariable UUID gameId,
             @RequestBody MoveRequest request) {
+        if (gameService.getGame(gameId) == null) {
+            return ResponseEntity.notFound().build();
+        }
+
         MoveResponse response = gameService.makeMove(
                 gameId,
                 request.from(),
