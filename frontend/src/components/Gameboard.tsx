@@ -2,7 +2,7 @@ import PromotionPicker, { type PromotionPiece } from "./PromotionPicker";
 import { apiUrl } from "../lib/api";
 import { Chess, type Square } from 'chess.js';
 import { useEffect, useRef, useState } from 'react';
-import { Chessboard, type SquareHandlerArgs } from 'react-chessboard';
+import { Chessboard, defaultPieces, type PieceRenderObject, type SquareHandlerArgs } from 'react-chessboard';
 import type { GameState, MoveResponse } from '../types/GameStatus';
 
 const BOARD_SQUARES = Array.from({ length: 8 }, (_, rankIndex) =>
@@ -18,8 +18,44 @@ export function checkedKingSquare(game: Chess): Square | null {
   }) ?? null;
 }
 
+export type BoardTheme = "wood"| "modern" | "evergreenIvory" | "knightQuest";
+
+type BoardThemeConfig = {
+  darkSquare: string;
+  lightSquare: string;
+  moveIndicator: "subtle" | "bold";
+  pieceStyle: "classic" | "symbol";
+};
+
+const BOARD_THEMES: Record<BoardTheme, BoardThemeConfig> = {
+  wood: { darkSquare: "#b58863", lightSquare: "#f0d9b5", moveIndicator: "subtle", pieceStyle: "classic" },
+  modern: { darkSquare: "#111318", lightSquare: "#5c616b", moveIndicator: "bold", pieceStyle: "symbol" },
+  evergreenIvory: { darkSquare: "#002E23", lightSquare: "#E8E3D5", moveIndicator: "bold", pieceStyle: "classic" },
+  knightQuest: { darkSquare: "#8194ab", lightSquare: "#dee5f0", moveIndicator: "subtle", pieceStyle: "classic" }
+};
+
+const SYMBOL_GLYPHS: Record<string, string> = {
+  // Use the filled glyphs for both sides so White has the same clear silhouettes.
+  wP: "♟", wR: "♜", wN: "♞", wB: "♝", wQ: "♛", wK: "♚",
+  bP: "♟", bR: "♜", bN: "♞", bB: "♝", bQ: "♛", bK: "♚"
+};
+
+const PIECE_STYLES: Record<BoardThemeConfig["pieceStyle"], PieceRenderObject> = {
+  classic: defaultPieces,
+  symbol: Object.fromEntries(Object.entries(SYMBOL_GLYPHS).map(([pieceCode, glyph]) => [
+    pieceCode,
+    (props?: { fill?: string; square?: string; svgStyle?: React.CSSProperties }) => {
+      const isWhite = pieceCode.startsWith("w");
+      return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" style={props?.svgStyle}>
+        <text x="50" y="79" textAnchor="middle" fontFamily="'Segoe UI Symbol', 'Noto Sans Symbols 2', serif" fontSize="82" fill={isWhite ? "#ffffff" : "#111318"} stroke={isWhite ? "#111318" : "#ffffff"} strokeWidth={isWhite ? "2.4" : "1.8"} paintOrder="stroke">{glyph}</text>
+      </svg>;
+    }
+  ])) as PieceRenderObject
+};
+
 type GameBoardProps = {
   gameId: string | undefined;
+  boardTheme?: BoardTheme;
   chessPosition: string;
   gameState: GameState;
   onGameStateChange: (state: GameState) => void;
@@ -34,7 +70,34 @@ type MoveRequest = {
   checkFen: string;
 };
 
-function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPositionChange, onSessionNotFound }: GameBoardProps) {
+function createMoveOptionStyles(game: Chess, square: Square, theme: BoardThemeConfig): Record<string, React.CSSProperties> {
+  const boldIndicator = theme.moveIndicator === "bold";
+  const markerFill = "rgba(255, 255, 255, .82)";
+  const markerOutline = "rgba(20, 27, 34, .62)";
+  const newSquares: Record<string, React.CSSProperties> = {};
+
+  for (const move of game.moves({ square, verbose: true })) {
+    const isCapture = Boolean(game.get(move.to));
+    newSquares[move.to] = {
+      background: boldIndicator
+        ? isCapture
+          ? `radial-gradient(circle, transparent 0 59%, ${markerFill} 60% 66%, ${markerOutline} 67% 70%, transparent 71%)`
+          : `radial-gradient(circle, ${markerFill} 0 14%, ${markerOutline} 15% 20%, transparent 21%)`
+        : isCapture
+          ? 'radial-gradient(circle, rgba(0,0,0,.1) 85%, transparent 85%)'
+          : 'radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)',
+      borderRadius: '50%'
+    };
+  }
+
+  newSquares[square] = {
+    background: boldIndicator ? "rgba(255, 255, 255, .3)" : "rgba(255, 255, 0, 0.4)",
+    ...(boldIndicator ? { boxShadow: `inset 0 0 0 2px ${markerOutline}` } : {})
+  };
+  return newSquares;
+}
+
+function GameBoard({ gameId, boardTheme = "modern", chessPosition, gameState, onGameStateChange, onPositionChange, onSessionNotFound }: GameBoardProps) {
 
   const [currChessPosition, setCurrChessPosition] = useState(chessPosition);
   const boardElement = useRef<HTMLDivElement>(null);
@@ -71,6 +134,11 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
     setOptionSquares({});
   }, [chessPosition]);
 
+  useEffect(() => {
+    if (!moveFrom) return;
+    setOptionSquares(createMoveOptionStyles(chessGame, moveFrom as Square, BOARD_THEMES[boardTheme]));
+  }, [boardTheme, chessGame, moveFrom]);
+
   function getMoveOptions(square: Square) {
     const moves = chessGame.moves({
       square,
@@ -83,24 +151,8 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
       return false;
     }
 
-    const newSquares: Record<string, React.CSSProperties> = {};
-    for (const move of moves) {
-      newSquares[move.to] = {
-        background: chessGame.get(move.to) && chessGame.get(move.to)?.color !== chessGame.get(square)?.color ? 'radial-gradient(circle, rgba(0,0,0,.1) 85%, transparent 85%)' // larger circle for capturing
-          : 'radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%)',
-        // smaller circle for moving
-        borderRadius: '50%'
-      };
-    }
-
-    // set the square clicked to move from to yellow
-    newSquares[square] = {
-      background: 'rgba(255, 255, 0, 0.4)'
-    };
-
-
     // set the option squares
-    setOptionSquares(newSquares);
+    setOptionSquares(createMoveOptionStyles(chessGame, square, BOARD_THEMES[boardTheme]));
 
     // return true to indicate that there are move options
     return true;
@@ -251,17 +303,19 @@ function GameBoard({ gameId, chessPosition, gameState, onGameStateChange, onPosi
     animationDurationInMs: 300,
     onSquareClick,
     position: currChessPosition,
+    pieces: PIECE_STYLES[BOARD_THEMES[boardTheme].pieceStyle],
+    darkSquareStyle: { backgroundColor: BOARD_THEMES[boardTheme].darkSquare },
+    lightSquareStyle: { backgroundColor: BOARD_THEMES[boardTheme].lightSquare },
     squareStyles: { ...optionSquares, ...checkSquareStyles },
     id: 'click-to-move'
   };
 
   return <div ref={boardElement}>
     <Chessboard options={chessboardOptions} />
-    {promotion && gameState.status === 'IN_PROGRESS' && <PromotionPicker color={promotion.color}
+    {promotion && gameState.status === 'IN_PROGRESS' && <PromotionPicker color={promotion.color} pieces={PIECE_STYLES[BOARD_THEMES[boardTheme].pieceStyle]}
       onChoose={piece => { void submitMove(promotion.from, promotion.to, piece); }}
       onCancel={() => { setPromotion(null); setMoveFrom(''); setOptionSquares({}); }} />}
   </div>;
 }
 
 export default GameBoard;
-

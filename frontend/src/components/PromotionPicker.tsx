@@ -1,15 +1,16 @@
 import { useLayoutEffect, useRef } from 'react';
+import type { PieceRenderObject } from 'react-chessboard';
 
 export type PromotionPiece = 'q' | 'r' | 'b' | 'n';
-const choices: { piece: PromotionPiece; name: string; white: string; black: string }[] = [
-  { piece: 'q', name: 'Queen', white: '\u2655', black: '\u265B' },
-  { piece: 'r', name: 'Rook', white: '\u2656', black: '\u265C' },
-  { piece: 'b', name: 'Bishop', white: '\u2657', black: '\u265D' },
-  { piece: 'n', name: 'Knight', white: '\u2658', black: '\u265E' },
+const choices: { piece: PromotionPiece; name: string }[] = [
+  { piece: 'q', name: 'Queen' },
+  { piece: 'r', name: 'Rook' },
+  { piece: 'b', name: 'Bishop' },
+  { piece: 'n', name: 'Knight' },
 ];
 
-export default function PromotionPicker({ color, onChoose, onCancel }: {
-  color: 'w' | 'b'; onChoose: (piece: PromotionPiece) => void; onCancel: () => void;
+export default function PromotionPicker({ color, pieces, onChoose, onCancel }: {
+  color: 'w' | 'b'; pieces: PieceRenderObject; onChoose: (piece: PromotionPiece) => void; onCancel: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useLayoutEffect(() => {
@@ -43,13 +44,15 @@ export default function PromotionPicker({ color, onChoose, onCancel }: {
       const bounds = event.currentTarget.getBoundingClientRect();
       if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) onCancel();
     }}>
-    <h2 id="promotion-title">Promote your pawn</h2>
+    <h2 id="promotion-title">Promotion</h2>
 
     <div className="promotion-choices">
-      {choices.map(choice => <button type="button" key={choice.piece} onClick={() => onChoose(choice.piece)}>
-        <span aria-hidden="true">{color === 'w' ? choice.white : choice.black}</span>{choice.name}
-      </button>)}
+      {choices.map(choice => {
+        const PieceIcon = pieces[`${color}${choice.piece.toUpperCase()}`];
+        return <button type="button" key={choice.piece} aria-label={choice.name} onClick={() => onChoose(choice.piece)}>
+          <span aria-hidden="true"><PieceIcon /></span>
+        </button>;
+      })}
     </div>
-    <button type="button" className="promotion-cancel" onClick={onCancel}>Cancel</button>
   </dialog>;
 }

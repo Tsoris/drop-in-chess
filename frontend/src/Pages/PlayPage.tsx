@@ -1,6 +1,6 @@
 import { apiUrl } from "../lib/api";
 import { useNavigate, useParams } from "react-router-dom";
-import Gameboard from "../components/Gameboard";
+import Gameboard, { type BoardTheme } from "../components/Gameboard";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { GameResponse, GameState } from "../types/GameStatus";
@@ -13,6 +13,19 @@ const INITIAL_GAME_STATE: GameState = {
 };
 
 type PositionDetails = Pick<GameResponse, "positionId" | "phase" | "context" | "source">;
+const BOARD_THEME_STORAGE_KEY = "drop-in-chess:board-theme";
+
+function loadBoardTheme(): BoardTheme {
+  try {
+    const savedTheme = window.localStorage.getItem(BOARD_THEME_STORAGE_KEY);
+    if (savedTheme === "modern" || savedTheme === "knightQuest" || savedTheme === "wood" || savedTheme === "evergreenIvory") {
+      return savedTheme;
+    }
+  } catch {
+    // Keep the default theme if browser storage is unavailable.
+  }
+  return "wood";
+}
 
 function gameResultMessage(gameState: GameState) {
   if (gameState.status !== "COMPLETED") return null;
@@ -51,6 +64,7 @@ export const PlayPage = () => {
   const navigate = useNavigate();
   const [hintsVisible, setHintsVisible] = useState(true);
   const [ecoHelpOpen, setEcoHelpOpen] = useState(false);
+  const [boardTheme, setBoardTheme] = useState<BoardTheme>(loadBoardTheme);
   const { gameId } = useParams();
   const [chessPosition, setChessPosition] = useState(
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -62,6 +76,14 @@ export const PlayPage = () => {
   const [copyMessage, setCopyMessage] = useState("");
   const [fenCopyMessage, setFenCopyMessage] = useState("");
   const [sessionNotFound, setSessionNotFound] = useState(false);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(BOARD_THEME_STORAGE_KEY, boardTheme);
+    } catch {
+      // The selected theme still works for this visit if storage is unavailable.
+    }
+  }, [boardTheme]);
 
   const sideToMove = chessPosition.split(" ")[1] === "b" ? "Black" : "White";
 
@@ -172,18 +194,27 @@ export const PlayPage = () => {
       <p className="position-info-intro"><span className="position-info-desktop">Select Show position info to explore ideas and plans for this position, or open the original game to see how it was played.</span><span className="position-info-mobile">Explore ideas and plans below the board, or open the original game to see how it was played.</span></p>
       <section className={`play-workspace${hintsVisible ? "" : " hints-collapsed"}`} aria-label="Chess position workspace">
         <div className="board-column">
-          {!sessionNotFound && (
+          <div className="play-toolbar">
+            <label className="board-theme-control">
+              <span>Board theme</span>
+              <select aria-label="Board theme" value={boardTheme} onChange={event => setBoardTheme(event.target.value as BoardTheme)}>
+                <option value="wood">Wood</option>
+                <option value="modern">Modern</option>
+                <option value="evergreenIvory">Evergreen Ivory</option>
+                <option value="knightQuest">Knight Quest</option>
+              </select>
+            </label>
             <div className="hints-toggle-bar">
-              <button type="button" aria-expanded={hintsVisible} aria-controls="position-hints" onClick={() => setHintsVisible(value => !value)}>{hintsVisible ? "Hide position info" : "Show position info"}</button>
+              {!sessionNotFound && <button type="button" aria-expanded={hintsVisible} aria-controls="position-hints" onClick={() => setHintsVisible(value => !value)}>{hintsVisible ? "Hide position info" : "Show position info"}</button>}
             </div>
-          )}
+          </div>
           {sessionNotFound && (
             <p className="missing-session-message missing-session-mobile" role="alert">
               <strong>Game not found</strong><span>Click New position to start another game.</span>
             </p>
           )}
           <div className="board-section">
-            <div className={`turn-indicator${sideToMove === "Black" ? " black-to-move" : ""}`}>
+            <div className={`turn-indicator${sideToMove === "Black" ? " black-to-move" : ""}`} data-board-theme={boardTheme}>
               <span className="turn-dot" aria-hidden="true" />
               <strong>{sideToMove} to move</strong>
             </div>
@@ -191,6 +222,7 @@ export const PlayPage = () => {
               <Gameboard
                 key={gameId}
                 gameId={gameId}
+                boardTheme={boardTheme}
                 chessPosition={chessPosition}
                 gameState={gameState}
                 onGameStateChange={setGameState}
