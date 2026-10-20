@@ -14,13 +14,13 @@
     padding: 2rem;
 }
 
-.app {
+.chess-application {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-.main-content {
+.chess-main-content {
     flex: 1;
 }
 

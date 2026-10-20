@@ -24,9 +24,9 @@ export function GameRoutes() {
 function App() {
     return (
         <BrowserRouter>
-            <div className='app'>
+            <div className='chess-application'>
                 <Header/>
-                <main className='main-content'>
+                <main className='chess-main-content'>
                     <GameRoutes />
                 </main>
             </div>

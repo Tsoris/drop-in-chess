@@ -35,7 +35,6 @@ const BOARD_THEMES: Record<BoardTheme, BoardThemeConfig> = {
 };
 
 const SYMBOL_GLYPHS: Record<string, string> = {
-  // Use the filled glyphs for both sides so White has the same clear silhouettes.
   wP: "♟", wR: "♜", wN: "♞", wB: "♝", wQ: "♛", wK: "♚",
   bP: "♟", bR: "♜", bN: "♞", bB: "♝", bQ: "♛", bK: "♚"
 };
@@ -47,7 +46,7 @@ const PIECE_STYLES: Record<BoardThemeConfig["pieceStyle"], PieceRenderObject> = 
     (props?: { fill?: string; square?: string; svgStyle?: React.CSSProperties }) => {
       const isWhite = pieceCode.startsWith("w");
       return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" style={props?.svgStyle}>
-        <text x="50" y="79" textAnchor="middle" fontFamily="'Segoe UI Symbol', 'Noto Sans Symbols 2', serif" fontSize="82" fill={isWhite ? "#ffffff" : "#111318"} stroke={isWhite ? "#111318" : "#ffffff"} strokeWidth={isWhite ? "2.4" : "1.8"} paintOrder="stroke">{glyph}</text>
+        <text x="50" y="79" textAnchor="middle" fontFamily="'Segoe UI Symbol', 'Noto Sans Symbols 2', serif" fontSize="82" fill={isWhite ? "#F5F5F3" : "#111318"} stroke={isWhite ? "#555A62" : "#ffffff"} strokeWidth={isWhite ? "0.9" : "1.8"} paintOrder="stroke">{glyph}</text>
       </svg>;
     }
   ])) as PieceRenderObject
