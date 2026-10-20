@@ -36,7 +36,7 @@ test('shared Knight Quest is playable while the backend is still starting', () =
   render(<MemoryRouter initialEntries={['/']}><GameRoutes /></MemoryRouter>);
   expect(screen.getByRole('group', { name: 'Knight mini-game board' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
-  expect(screen.getByText(/Starting Drop in Chess/)).toBeVisible();
+  expect(screen.getByText(/Waking up Drop in Chess server/)).toBeVisible();
 });
 
 test('refresh after Continue restores the current route without reopening Knight Quest', async () => {
